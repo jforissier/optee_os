@@ -304,3 +304,8 @@ CFG_DYN_SHM_CAP ?= y
 # Enables support for larger physical addresses, that is, it will define
 # paddr_t as a 64-bit type.
 CFG_CORE_LARGE_PHYS_ADDR ?= n
+
+# Define the max bit size for big number representation in TEE priviledge
+# layer. 4096 is currently the max supported by the underlying crypto library.
+# TEEs running in constrained sized memory may want to optimize this value.
+CFG_CORE_BIGNUM_MAX_BITS ?= 4096

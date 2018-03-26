@@ -493,7 +493,7 @@ TEE_Result crypto_hash_final(void *ctx, uint32_t algo, uint8_t *digest,
 
 #if defined(_CFG_CRYPTO_WITH_ACIPHER)
 
-#define LTC_MAX_BITS_PER_VARIABLE   (4096)
+#define LTC_MAX_BITS_PER_VARIABLE	CFG_CORE_BIGNUM_MAX_BITS
 #define LTC_VARIABLE_NUMBER         (50)
 
 #define LTC_MEMPOOL_U32_SIZE \
