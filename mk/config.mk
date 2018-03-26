@@ -309,3 +309,9 @@ CFG_CORE_LARGE_PHYS_ADDR ?= n
 # layer. 4096 is currently the max supported by the underlying crypto library.
 # TEEs running in constrained sized memory may want to optimize this value.
 CFG_CORE_BIGNUM_MAX_BITS ?= 4096
+
+# Define the max bit size for big number representation in the big nummber
+# APIs of the Internal Core API, at secure application level.
+# TEEs with TAs running in constrained sized memory may want to optimize this
+# value.
+CFG_TA_BIGNUM_MAX_BITS ?= 4096
