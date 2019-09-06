@@ -35,12 +35,20 @@ ifeq ($(CFG_ASAN_SHADOW_OFFSET),)
 $(error error: CFG_CORE_SANITIZE_KADDRESS not supported by platform (flavor))
 endif
 ifeq ($(COMPILER),clang)
-$(error error: CFG_CORE_SANITIZE_KADDRESS not supported with Clang)
-endif
+# FIXME: -fsanitize=kernel-address won't emit constructors for globals (?),
+# but -fsanitize=address will
+# FIXME: -asan-stack=1 requires to implement more __asan_ functions in asan.c
+cflags_kasan	+= -fsanitize=address \
+		   -mllvm -asan-mapping-offset=$(CFG_ASAN_SHADOW_OFFSET) \
+		   -mllvm -asan-stack=0 -mllvm -asan-globals=1 \
+		   -mllvm -asan-instrumentation-with-call-threshold=0 \
+		   -mllvm -asan-instrument-dynamic-allocas=0
+else
 cflags_kasan	+= -fsanitize=kernel-address \
 		   -fasan-shadow-offset=$(CFG_ASAN_SHADOW_OFFSET)\
 		   --param asan-stack=1 --param asan-globals=1 \
 		   --param asan-instrumentation-with-call-threshold=0
+endif
 cflags$(sm)	+= $(cflags_kasan)
 endif
 aflags$(sm)	+= $(core-platform-aflags)

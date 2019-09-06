@@ -13,7 +13,7 @@
 #include <types_ext.h>
 #include <util.h>
 
-#if __GCC_VERSION >= 70000
+#if (__GCC_VERSION >= 70000) || defined(__clang__)
 #define ASAN_ABI_VERSION 7
 #else
 #define ASAN_ABI_VERSION 6
@@ -282,3 +282,35 @@ void __asan_unregister_globals(struct asan_global *globals __unused,
 			       size_t size __unused)
 {
 }
+
+#ifdef __clang__
+
+void *__asan_memcpy(void *dst, const void *src, size_t size);
+void *__asan_memcpy(void *dst, const void *src, size_t size)
+{
+	return memcpy(dst, src, size);
+}
+
+void *__asan_memmove(void *dst, const void *src, size_t size);
+void *__asan_memmove(void *dst, const void *src, size_t size)
+{
+	return memmove(dst, src, size);
+}
+
+void *__asan_memset(void *s, int c, size_t n);
+void *__asan_memset(void *s, int c, size_t n)
+{
+	return memset(s, c, n);
+}
+
+void __asan_init(void);
+void __asan_init(void)
+{
+}
+
+void __asan_version_mismatch_check_v8(void);
+void __asan_version_mismatch_check_v8(void)
+{
+}
+
+#endif

@@ -237,6 +237,7 @@ SECTIONS
 	.ctors : ALIGN(8) {
 		__ctor_list = .;
 		KEEP(*(.ctors .ctors.* .init_array .init_array.*))
+		KEEP(*(.text.asan.module_ctor)) /* Clang */
 		__ctor_end = .;
 	}
 	.dtors : ALIGN(8) {
@@ -441,7 +442,11 @@ SECTIONS
 		/* Strip unnecessary stuff */
 		*(.comment .note .eh_frame .interp)
 		/* Strip meta variables */
-		*(__keep_meta_vars*)
+		/*
+		 * FIXME: Clang ASAN: .text.asan.module_ctor invoke
+		 * __asan_register_globals on them, addr is 0 if stripped
+		 */
+		/* *(__keep_meta_vars*) */
 	}
 
 }

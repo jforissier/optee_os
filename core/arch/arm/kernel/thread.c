@@ -44,7 +44,11 @@
 #else
 #define STACK_TMP_SIZE		(2048 + STACK_TMP_OFFS)
 #endif
+#ifdef CFG_CORE_SANITIZE_KADDRESS
+#define STACK_THREAD_SIZE	9216
+#else
 #define STACK_THREAD_SIZE	8192
+#endif
 
 #define STACK_ABT_SIZE		3072
 
