@@ -494,3 +494,6 @@ endif
 
 # Enables backwards compatible derivation of RPMB and SSK keys
 CFG_CORE_HUK_SUBKEY_COMPAT ?= y
+
+# Adds symbols information in OP-TEE binary
+CFG_CORE_SYMS ?= $(CFG_TEE_CORE_DEBUG)
