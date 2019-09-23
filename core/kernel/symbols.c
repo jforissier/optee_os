@@ -3,6 +3,7 @@
  * Copyright (c) 2019, EPAM Systems
  */
 
+#include <stdio.h>
 #include <symbols.h>
 #include <util.h>
 
@@ -88,6 +89,28 @@ int syms_get_name(vaddr_t addr, char *buf, size_t buf_len)
 		return -1;
 
 	return syms_uncompress_name(sym, buf, buf_len);
+}
+
+int syms_format_name_w_offset(vaddr_t addr, char *buf, size_t buf_len)
+{
+	size_t offset;
+	int len;
+	const struct syms_table* sym = find_symbol(addr, &offset);
+
+	if (!buf_len)
+		return 0;
+
+	if (!sym)
+		return 0;
+
+	*buf++ = '<';
+	buf_len--;
+
+	len = syms_uncompress_name(sym, buf, buf_len);
+	buf_len -= len;
+	buf += len;
+
+	return snprintf(buf, buf_len, "+0x%lx>", offset) + 1 + len;
 }
 
 ssize_t syms_get_offset(vaddr_t addr)

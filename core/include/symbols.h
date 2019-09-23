@@ -20,6 +20,7 @@ struct syms_table
 };
 
 int syms_get_name(vaddr_t addr, char *buf, size_t buf_len);
+int syms_format_name_w_offset(vaddr_t addr, char *buf, size_t buf_len);
 ssize_t syms_get_offset(vaddr_t addr);
 
 #endif  /* SYMBOLS_H */
