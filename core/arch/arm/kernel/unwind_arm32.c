@@ -36,6 +36,7 @@
 #include <kernel/tee_misc.h>
 #include <kernel/unwind.h>
 #include <string.h>
+#include <symbols.h>
 #include <tee_api_types.h>
 #include <tee/tee_svc.h>
 #include <trace.h>
@@ -435,10 +436,22 @@ void print_stack_arm32(int level, struct unwind_state_arm32 *state,
 		       vaddr_t exidx, size_t exidx_sz,
 		       vaddr_t stack, size_t stack_size)
 {
+#ifdef CFG_CORE_SYMS
+	char symbol[64];
+#endif
+
 	trace_printf_helper_raw(level, true, "Call stack:");
 	do {
+#ifdef CFG_CORE_SYMS
+		syms_format_name_w_offset(state->registers[PC], symbol,
+					  sizeof(symbol) - 1);
+		symbol[sizeof(symbol) - 1] = 0;
+		trace_printf_helper_raw(level, true, " 0x%016" PRIx64 " %s",
+					state->registers[PC], symbol);
+#else
 		trace_printf_helper_raw(level, true, " 0x%08" PRIx32,
 					state->registers[PC]);
+#endif
 	} while (unwind_stack_arm32(state, exidx, exidx_sz, stack, stack_size));
 }
 
