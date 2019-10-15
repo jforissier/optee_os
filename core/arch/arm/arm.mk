@@ -5,6 +5,10 @@ CFG_CORE_TZSRAM_EMUL_SIZE ?= 458752
 CFG_LPAE_ADDR_SPACE_SIZE ?= (1ull << 32)
 
 CFG_MMAP_REGIONS ?= 13
+ifeq ($(CFG_CORE_ASLR),y)
+# 1 extra region for the identity map
+CFG_MMAP_REGIONS := $(CFG_MMAP_REGIONS) + 1
+endif
 CFG_RESERVED_VASPACE_SIZE ?= (1024 * 1024 * 10)
 
 ifeq ($(CFG_ARM64_core),y)
