@@ -45,7 +45,11 @@ nostdinc$(sm)	:= -nostdinc -isystem $(shell $(CC$(sm)) \
 comp-cflags-warns-clang := -Wno-language-extension-token \
 			 -Wno-gnu-zero-variadic-macro-arguments
 
-libgcc$(sm)  	:=
+# Get location of the "compiler-rt" runtime library, needed for some builtins
+# (for example, __builtin_mul_overflow() pulls symbol __muloti4 which is in
+# compiler-rt).
+libgcc$(sm)  	:= $(shell $(CC$(sm)) --rtlib=compiler-rt $(CFLAGS$(arch-bits-$(sm))) $(comp-cflags$(sm)) \
+			-print-libgcc-file-name 2> /dev/null)
 
 # Define these to something to discover accidental use
 CC		:= false
