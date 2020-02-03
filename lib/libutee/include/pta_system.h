@@ -182,4 +182,14 @@
  */
 #define PTA_SYSTEM_DLSYM                11
 
+/*
+ * Decrement the reference count on a shared library and unload it when it
+ * reaches zero
+ *
+ * [in]     memref[0]: the UUID of the shared library (@filename)
+ *
+ * Used by: (libdl) dlclose(void *handle)
+ */
+#define PTA_SYSTEM_DLCLOSE              12
+
 #endif /* __PTA_SYSTEM_H */

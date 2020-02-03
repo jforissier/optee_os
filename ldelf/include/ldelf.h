@@ -84,6 +84,9 @@ struct dl_entry_arg {
 			vaddr_t val;	/* out */
 			char symbol[];	/* in */
 		} dlsym;
+		struct {
+			TEE_UUID uuid;	/* in */
+		} dlclose;
 	};
 };
 
@@ -92,6 +95,7 @@ struct dl_entry_arg {
  */
 #define LDELF_DL_ENTRY_DLOPEN	0
 #define LDELF_DL_ENTRY_DLSYM	1
+#define LDELF_DL_ENTRY_DLCLOSE	2
 
 /*
  * Values for dl_entry_arg::dlopen::flags

@@ -725,6 +725,47 @@ static TEE_Result call_ldelf_dlsym(struct user_ta_ctx *utc, TEE_UUID *uuid,
 	return res;
 }
 
+static TEE_Result call_ldelf_dlclose(struct user_ta_ctx *utc, TEE_UUID *uuid)
+{
+	uaddr_t usr_stack = utc->ldelf_stack_ptr;
+	TEE_Result res = TEE_ERROR_GENERIC;
+	struct dl_entry_arg *arg = NULL;
+	uint32_t panic_code = 0;
+	uint32_t panicked = 0;
+
+	assert(uuid);
+
+	usr_stack -= ROUNDUP(sizeof(*arg), STACK_ALIGNMENT);
+	arg = (struct dl_entry_arg *)usr_stack;
+
+	res = tee_mmu_check_access_rights(&utc->uctx,
+					  TEE_MEMORY_ACCESS_READ |
+					  TEE_MEMORY_ACCESS_WRITE |
+					  TEE_MEMORY_ACCESS_ANY_OWNER,
+					  (uaddr_t)arg, sizeof(*arg));
+	if (res) {
+		EMSG("ldelf stack is inaccessible!");
+		return res;
+	}
+
+	memset(arg, 0, sizeof(*arg));
+	arg->cmd = LDELF_DL_ENTRY_DLCLOSE;
+	arg->dlclose.uuid = *uuid;
+
+	res = thread_enter_user_mode((vaddr_t)arg, 0, 0, 0,
+				     usr_stack, utc->dl_entry_func,
+				     is_arm32, &panicked, &panic_code);
+	if (panicked) {
+		EMSG("ldelf dl_entry function panicked");
+		abort_print_current_ta();
+		res = TEE_ERROR_TARGET_DEAD;
+	}
+	if (!res)
+		res = arg->ret;
+
+	return res;
+}
+
 static TEE_Result system_dlopen(struct tee_ta_session *cs, uint32_t param_types,
 				TEE_Param params[TEE_NUM_PARAMS])
 {
@@ -795,6 +836,35 @@ static TEE_Result system_dlsym(struct tee_ta_session *cs, uint32_t param_types,
 	return res;
 }
 
+static TEE_Result system_dlclose(struct tee_ta_session *cs,
+				 uint32_t param_types,
+				 TEE_Param params[TEE_NUM_PARAMS])
+{
+	uint32_t exp_pt = TEE_PARAM_TYPES(TEE_PARAM_TYPE_MEMREF_INPUT,
+					  TEE_PARAM_TYPE_NONE,
+					  TEE_PARAM_TYPE_NONE,
+					  TEE_PARAM_TYPE_NONE);
+	TEE_Result res = TEE_ERROR_GENERIC;
+	struct tee_ta_session *s = NULL;
+	struct user_ta_ctx *utc = NULL;
+	TEE_UUID *uuid = NULL;
+
+	if (exp_pt != param_types)
+		return TEE_ERROR_BAD_PARAMETERS;
+
+	uuid = params[0].memref.buffer;
+	if (!uuid || params[0].memref.size != sizeof(*uuid))
+		return TEE_ERROR_BAD_PARAMETERS;
+
+	utc = to_user_ta_ctx(cs->ctx);
+
+	s = tee_ta_pop_current_session();
+	res = call_ldelf_dlclose(utc, uuid);
+	tee_ta_push_current_session(s);
+
+	return res;
+}
+
 static TEE_Result open_session(uint32_t param_types __unused,
 			       TEE_Param params[TEE_NUM_PARAMS] __unused,
 			       void **sess_ctx)
@@ -858,6 +928,8 @@ static TEE_Result invoke_command(void *sess_ctx, uint32_t cmd_id,
 		return system_dlopen(s, param_types, params);
 	case PTA_SYSTEM_DLSYM:
 		return system_dlsym(s, param_types, params);
+	case PTA_SYSTEM_DLCLOSE:
+		return system_dlclose(s, param_types, params);
 	default:
 		break;
 	}

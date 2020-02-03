@@ -35,3 +35,7 @@ TEE_Result dlsym_entry(struct dl_entry_arg *arg)
 	return ta_elf_resolve_sym(arg->dlsym.symbol, &arg->dlsym.val, elf);
 }
 
+TEE_Result dlclose_entry(struct dl_entry_arg *arg __unused)
+{
+	return TEE_ERROR_NOT_IMPLEMENTED;
+}

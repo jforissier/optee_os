@@ -112,6 +112,9 @@ static void __noreturn dl_entry(struct dl_entry_arg *arg)
 	case LDELF_DL_ENTRY_DLSYM:
 		arg->ret = dlsym_entry(arg);
 		break;
+	case LDELF_DL_ENTRY_DLCLOSE:
+		arg->ret = dlclose_entry(arg);
+		break;
 	default:
 		arg->ret = TEE_ERROR_NOT_SUPPORTED;
 	}
