@@ -248,6 +248,63 @@ static void save_symtab(struct ta_elf *elf)
 	save_hashtab(elf);
 }
 
+/* Save INIT_ARRAY information from the dynamic segment */
+static void save_init_helper(struct ta_elf *elf, vaddr_t addr, size_t memsz)
+{
+	size_t dyn_entsize = 0;
+	size_t num_dyns = 0;
+	size_t n = 0;
+	unsigned int tag = 0;
+	size_t val = 0;
+
+	if (elf->is_32bit)
+		dyn_entsize = sizeof(Elf32_Dyn);
+	else
+		dyn_entsize = sizeof(Elf64_Dyn);
+
+	assert(!(memsz % dyn_entsize));
+	num_dyns = memsz / dyn_entsize;
+
+	for (n = 0; n < num_dyns; n++) {
+		read_dyn(elf, addr, n, &tag, &val);
+		if (tag == DT_INIT_ARRAY)
+			elf->init_array = (void *)(val + elf->load_addr);
+		else if (tag == DT_INIT_ARRAYSZ)
+			elf->init_arraysz = val;
+	}
+
+	if (!elf->init_array)
+		return;
+	assert(elf->init_arraysz);
+}
+
+static void save_init_array(struct ta_elf *elf)
+{
+	size_t n = 0;
+
+	if (elf->is_32bit) {
+		Elf32_Phdr *phdr = elf->phdr;
+
+		for (n = 0; n < elf->e_phnum; n++) {
+			if (phdr[n].p_type == PT_DYNAMIC) {
+				save_init_helper(elf, phdr[n].p_vaddr,
+						 phdr[n].p_memsz);
+				return;
+			}
+		}
+	} else {
+		Elf64_Phdr *phdr = elf->phdr;
+
+		for (n = 0; n < elf->e_phnum; n++) {
+			if (phdr[n].p_type == PT_DYNAMIC) {
+				save_init_helper(elf, phdr[n].p_vaddr,
+						 phdr[n].p_memsz);
+				return;
+			}
+		}
+	}
+}
+
 static void init_elf(struct ta_elf *elf)
 {
 	TEE_Result res = TEE_SUCCESS;
@@ -841,6 +898,7 @@ static void load_main(struct ta_elf *elf)
 	add_dependencies(elf);
 	copy_section_headers(elf);
 	save_symtab(elf);
+	save_init_array(elf);
 	close_handle(elf);
 
 	elf->head = (struct ta_head *)elf->load_addr;
@@ -869,6 +927,7 @@ static void load_main(struct ta_elf *elf)
 		add_dependencies(elf);
 		copy_section_headers(elf);
 		save_symtab(elf);
+		save_init_array(elf);
 		close_handle(elf);
 		elf->head = (struct ta_head *)elf->load_addr;
 		/*
@@ -939,6 +998,7 @@ void ta_elf_load_dependency(struct ta_elf *elf, bool is_32bit)
 	add_dependencies(elf);
 	copy_section_headers(elf);
 	save_symtab(elf);
+	save_init_array(elf);
 	close_handle(elf);
 }
 

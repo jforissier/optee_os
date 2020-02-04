@@ -59,6 +59,10 @@ struct ta_elf {
 	/* DT_HASH hash table for faster resolution of external symbols */
 	void *hashtab;
 
+	/* Init function pointers, NULL if absent or already run */
+	void *init_array;
+	size_t init_arraysz;
+
 	struct segment_head segs;
 
 	vaddr_t exidx_start;

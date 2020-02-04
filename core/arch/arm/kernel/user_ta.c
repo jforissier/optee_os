@@ -259,7 +259,25 @@ static TEE_Result init_with_ldelf(struct tee_ta_session *sess,
 	sess->fbuf = arg->fbuf;
 #endif
 	utc->dl_entry_func = arg->dl_entry;
+	utc->init_entry_func = arg->init_entry;
 
+	if (utc->init_entry_func) {
+		/* TA has some initialization function to run */
+		res = thread_enter_user_mode((vaddr_t)arg, 0, 0, 0,
+					     usr_stack, utc->init_entry_func,
+					     is_arm32, &panicked, &panic_code);
+		if (panicked) {
+			abort_print_current_ta();
+			res = TEE_ERROR_GENERIC;
+			EMSG("ldelf panicked");
+			goto out;
+		}
+		if (res) {
+			EMSG("ldelf failed with res: %#"PRIx32, res);
+			goto out;
+		}
+		utc->init_entry_func = 0;
+	}
 out:
 	s = tee_ta_pop_current_session();
 	assert(s == sess);

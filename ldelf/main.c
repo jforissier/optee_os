@@ -119,6 +119,14 @@ static void __noreturn dl_entry(struct dl_entry_arg *arg)
 	sys_return_cleanup();
 }
 
+/* Run ELF init functions (.init_array) that have not been run already */
+static void __noreturn init_entry(void)
+{
+	DMSG("TODO: run init functions");
+
+	sys_return_cleanup();
+}
+
 /*
  * ldelf()- Loads ELF into memory
  * @arg:	Argument passing to/from TEE Core
@@ -174,6 +182,14 @@ void ldelf(struct ldelf_arg *arg)
 	arg->dump_entry = 0;
 #endif
 	arg->dl_entry = (vaddr_t)(void *)dl_entry;
+
+	arg->init_entry = 0;
+	TAILQ_FOREACH(elf, &main_elf_queue, link) {
+		if (elf->init_array) {
+			arg->init_entry = (vaddr_t)(void *)init_entry;
+			break;
+		}
+	}
 
 	sys_return_cleanup();
 }

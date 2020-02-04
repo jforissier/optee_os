@@ -24,6 +24,7 @@
  * @ftrace_entry: [out] Dump TA mappings and ftrace buffer
  * @fbuf:         [out] ftrace buffer pointer
  * @dl_entry:     [out] Dynamic linking interface (for libdl)
+ * @init_entry:   [out] Run init_array functions for all yet uninitialized ELFs
  */
 struct ldelf_arg {
 	TEE_UUID uuid;
@@ -34,6 +35,7 @@ struct ldelf_arg {
 	uint64_t dump_entry;
 	uint64_t ftrace_entry;
 	uint64_t dl_entry;
+	uint64_t init_entry;
 	struct ftrace_buf *fbuf;
 };
 

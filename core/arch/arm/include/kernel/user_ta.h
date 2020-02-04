@@ -27,6 +27,7 @@ SLIST_HEAD(load_seg_head, load_seg);
  * @dump_entry_func:	Entry address in TA for dumping address mappings
  *			and stack trace
  * @ftrace_entry_func:	Entry address in ldelf for dumping ftrace data
+ * @init_entry_func:	Entry address in ldelf for calling ELF init functions
  * @ldelf_stack_ptr:	Stack pointer used for dumping address mappings and
  *			stack trace
  * @is_32bit:		True if 32-bit TA, false if 64-bit TA
@@ -49,6 +50,7 @@ struct user_ta_ctx {
 	uaddr_t ftrace_entry_func;
 #endif
 	uaddr_t dl_entry_func;
+	uaddr_t init_entry_func;
 	uaddr_t ldelf_stack_ptr;
 	bool is_32bit;
 	bool is_initializing;
