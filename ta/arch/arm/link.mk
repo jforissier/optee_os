@@ -34,21 +34,46 @@ link-ldflags += -z max-page-size=4096 # OP-TEE always uses 4K alignment
 link-ldflags += --as-needed # Do not add dependency on unused shlib
 link-ldflags += $(link-ldflags$(sm))
 
+# Symbols from the TA main executable that should be exported (added to the
+# .dynsym table of the TA)
+# These symbols are referenced by libutee. When the main TA executable is
+# linked against libutee.a, but other shared libraries ultimately reference
+# these symbols (that is, a shared library used by the TA links against either
+# libutee.a or libutee.so), symbols need to be present in the TA .dynsym, but
+# the linker would not automatically add them since at that time it finds all
+# the symbols in libutee.a. Example of such a case: a TA with C++ code and
+# CFG_ULIBS_SHARED=y.
+dynsym-symbols += ta_head ta_heap ta_heap_size ta_num_props ta_props
+dynsym-symbols += tahead_get_trace_level trace_ext_prefix trace_level trace_level
+dynsym-symbols += TA_CloseSessionEntryPoint TA_CreateEntryPoint TA_DestroyEntryPoint
+dynsym-symbols += TA_InvokeCommandEntryPoint TA_OpenSessionEntryPoint
+# __elf_phdr_info and __ftrace_info are always resolved dynamically by ldelf
+dynsym-symbols += __elf_phdr_info
+ifeq ($(CFG_FTRACE_SUPPORT),y)
+dynsym-symbols += __ftrace_info
+endif
+
 $(link-out-dir$(sm))/dyn_list:
 	@$(cmd-echo-silent) '  GEN     $@'
 	$(q)mkdir -p $(dir $@)
-	$(q)echo "{" >$@
-	$(q)echo "__elf_phdr_info;" >>$@
-ifeq ($(CFG_FTRACE_SUPPORT),y)
-	$(q)echo "__ftrace_info;" >>$@
-endif
-	$(q)echo "};" >>$@
+	$(q)echo "{ $(foreach s,$(dynsym-symbols),$(s); )};" >$@
 link-ldflags += --dynamic-list $(link-out-dir$(sm))/dyn_list
 dynlistdep = $(link-out-dir$(sm))/dyn_list
 cleanfiles += $(link-out-dir$(sm))/dyn_list
 
 link-ldadd  = $(user-ta-ldadd) $(addprefix -L,$(libdirs))
-link-ldadd += --start-group $(addprefix -l,$(libnames)) --end-group
+link-ldadd += --start-group
+ifeq (,$(filter %.cpp,$(srcs)))
+link-ldadd += $(addprefix -l,$(libnames))
+else
+link-ldflags += --eh-frame-hdr
+link-ldadd += $(libstdc++$(sm)) $(libgcc_eh$(sm))
+# With C++, libutee must be linked statically or exception handling cannot work
+link-ldadd += -l:libutee.a
+link-ldadd += $(addprefix -l,$(filter-out utee,$(libnames)))
+endif
+link-ldadd += --end-group
+
 ldargs-$(user-ta-uuid).elf := $(link-ldflags) $(objs) $(link-ldadd)
 
 
