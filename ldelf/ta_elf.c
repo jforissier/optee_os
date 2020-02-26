@@ -29,6 +29,18 @@ static vaddr_t ta_stack_size;
 
 struct ta_elf_queue main_elf_queue = TAILQ_HEAD_INITIALIZER(main_elf_queue);
 
+/* Main application is always ID 1, shared libraries take IDs 2 and above */
+static size_t next_tls_mod_id(struct ta_elf *elf)
+{
+	static size_t last_tls_mod_id = 2;
+
+	if (elf->is_main) {
+		assert(last_tls_mod_id == 2); /* Main always comes first */
+		return 1;
+	}
+	return last_tls_mod_id++;
+}
+
 static struct ta_elf *queue_elf_helper(const TEE_UUID *uuid)
 {
 	struct ta_elf *elf = calloc(1, sizeof(*elf));
@@ -431,6 +443,8 @@ static void parse_load_segments(struct ta_elf *elf)
 			} else if (phdr[n].p_type == PT_ARM_EXIDX) {
 				elf->exidx_start = phdr[n].p_vaddr;
 				elf->exidx_size = phdr[n].p_filesz;
+			} else if (phdr[n].p_type == PT_TLS) {
+				elf->tls_mod_id = next_tls_mod_id(elf);
 			}
 	} else {
 		Elf64_Phdr *phdr = elf->phdr;

@@ -64,6 +64,9 @@ struct ta_elf {
 	vaddr_t exidx_start;
 	size_t exidx_size;
 
+	/* Thread Local Storage */
+	size_t tls_mod_id;
+
 	uint32_t handle;
 
 	struct ta_head *head;

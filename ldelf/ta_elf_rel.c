@@ -57,13 +57,18 @@ static bool __resolve_sym(struct ta_elf *elf, unsigned int st_bind,
 	if (strcmp(name, elf->dynstr + st_name))
 		return false;
 
-	if (st_value > (elf->max_addr - elf->load_addr))
-		err(TEE_ERROR_BAD_FORMAT, "Symbol location out of range");
-
 	switch (st_type) {
 	case STT_OBJECT:
 	case STT_FUNC:
-		*val = st_value + elf->load_addr;
+		if (st_value > (elf->max_addr - elf->load_addr))
+			err(TEE_ERROR_BAD_FORMAT,
+			    "Symbol location out of range");
+		if (val)
+			*val = st_value + elf->load_addr;
+		break;
+	case STT_TLS:
+		if (val)
+			*val = st_value;
 		break;
 	default:
 		err(TEE_ERROR_NOT_SUPPORTED, "Symbol type not supported");
@@ -143,9 +148,12 @@ static TEE_Result resolve_sym_helper(uint32_t hash, const char *name,
  * are searched first, then weak ones. Last option, when at least one weak but
  * undefined symbol exists, resolve to zero. Otherwise return
  * TEE_ERROR_ITEM_NOT_FOUND.
+ * @val (if != 0) receives the symbol value
+ * @found_elf (if != 0) receives the module where the symbol is found
  */
-TEE_Result ta_elf_resolve_sym(const char *name, vaddr_t *val,
-			      struct ta_elf *elf)
+static TEE_Result ta_elf_resolve_sym2(const char *name, vaddr_t *val,
+				      struct ta_elf **found_elf,
+				      struct ta_elf *elf)
 {
 	uint32_t hash = elf_hash(name);
 	bool found_weak_undef = false;
@@ -153,33 +161,64 @@ TEE_Result ta_elf_resolve_sym(const char *name, vaddr_t *val,
 	if (elf) {
 		/* Search global symbols */
 		if (!resolve_sym_helper(hash, name, val, elf, false, NULL))
-			return TEE_SUCCESS;
+			goto success;
 		/* Search weak symbols */
 		if (!resolve_sym_helper(hash, name, val, elf, true,
 					&found_weak_undef))
-			return TEE_SUCCESS;
+			goto success;
 		if (found_weak_undef) {
-			*val = 0;
-			return TEE_SUCCESS;
+			if (val)
+				*val = 0;
+			goto success;
 		}
 	}
 
 	TAILQ_FOREACH(elf, &main_elf_queue, link) {
 		if (!resolve_sym_helper(hash, name, val, elf, false, NULL))
-			return TEE_SUCCESS;
+			goto success;
 	}
 
 	TAILQ_FOREACH(elf, &main_elf_queue, link) {
 		if (!resolve_sym_helper(hash, name, val, elf, true,
 					&found_weak_undef))
-			return TEE_SUCCESS;
+			goto success;
 		if (found_weak_undef) {
-			*val = 0;
-			return TEE_SUCCESS;
+			if (val)
+				*val = 0;
+			goto success;
 		}
 	}
 
 	return TEE_ERROR_ITEM_NOT_FOUND;
+
+success:
+	if (found_elf)
+		*found_elf = elf;
+	return TEE_SUCCESS;
+}
+
+TEE_Result ta_elf_resolve_sym(const char *name, vaddr_t *val,
+			      struct ta_elf *elf)
+{
+	return ta_elf_resolve_sym2(name, val, NULL, elf);
+}
+
+static void e32_get_sym_name(const Elf32_Sym *sym_tab, size_t num_syms,
+			     const char *str_tab, size_t str_tab_size,
+			     Elf32_Rel *rel, const char **name)
+{
+	size_t sym_idx = 0;
+	size_t name_idx = 0;
+
+	sym_idx = ELF32_R_SYM(rel->r_info);
+	if (sym_idx >= num_syms)
+		err(TEE_ERROR_BAD_FORMAT, "Symbol index out of range");
+	sym_idx = confine_array_index(sym_idx, num_syms);
+
+	name_idx = sym_tab[sym_idx].st_name;
+	if (name_idx >= str_tab_size)
+		err(TEE_ERROR_BAD_FORMAT, "Name index out of range");
+	*name = str_tab + name_idx;
 }
 
 static void resolve_sym(const char *name, vaddr_t *val)
@@ -194,23 +233,47 @@ static void e32_process_dyn_rel(const Elf32_Sym *sym_tab, size_t num_syms,
 				const char *str_tab, size_t str_tab_size,
 				Elf32_Rel *rel, Elf32_Addr *where)
 {
-	size_t sym_idx = 0;
 	const char *name = NULL;
 	vaddr_t val = 0;
-	size_t name_idx = 0;
+
+	e32_get_sym_name(sym_tab, num_syms, str_tab, str_tab_size, rel, &name);
+	resolve_sym(name, &val);
+	*where = val;
+}
+
+static void e32_tls_get_module(const Elf32_Sym *sym_tab, size_t num_syms,
+			       const char *str_tab, size_t str_tab_size,
+			       Elf32_Rel *rel, struct ta_elf **mod)
+{
+	const char *name = NULL;
+	size_t sym_idx = 0;
 
 	sym_idx = ELF32_R_SYM(rel->r_info);
 	if (sym_idx >= num_syms)
 		err(TEE_ERROR_BAD_FORMAT, "Symbol index out of range");
 	sym_idx = confine_array_index(sym_idx, num_syms);
+	if (!sym_idx || sym_tab[sym_idx].st_shndx != SHN_UNDEF) {
+		/* No symbol, or symbol is defined in current module */
+		return;
+	}
 
-	name_idx = sym_tab[sym_idx].st_name;
-	if (name_idx >= str_tab_size)
-		err(TEE_ERROR_BAD_FORMAT, "Name index out of range");
-	name = str_tab + name_idx;
+	*mod = NULL;
+	e32_get_sym_name(sym_tab, num_syms, str_tab, str_tab_size, rel, &name);
+	ta_elf_resolve_sym2(name, NULL, mod, NULL);
+	if (!*mod)
+		err(TEE_ERROR_BAD_FORMAT,
+		    "Symbol %s not found for TLS relocation", name);
+}
 
-	resolve_sym(name, &val);
-	*where = val;
+static void e32_tls_resolve(const Elf32_Sym *sym_tab, size_t num_syms,
+			    const char *str_tab, size_t str_tab_size,
+			    Elf32_Rel *rel, vaddr_t *val)
+{
+	struct ta_elf *mod = NULL;
+	const char *name = NULL;
+
+	e32_get_sym_name(sym_tab, num_syms, str_tab, str_tab_size, rel, &name);
+	ta_elf_resolve_sym2(name, val, &mod, NULL);
 }
 
 static void e32_relocate(struct ta_elf *elf, unsigned int rel_sidx)
@@ -283,8 +346,10 @@ static void e32_relocate(struct ta_elf *elf, unsigned int rel_sidx)
 
 	rel_end = rel + shdr[rel_sidx].sh_size / sizeof(Elf32_Rel);
 	for (; rel < rel_end; rel++) {
+		struct ta_elf *mod = NULL;
 		Elf32_Addr *where = NULL;
 		size_t sym_idx = 0;
+		vaddr_t val = 0;
 
 		/* Check the address is inside TA memory */
 		if (rel->r_offset >= (elf->max_addr - elf->load_addr))
@@ -321,6 +386,17 @@ static void e32_relocate(struct ta_elf *elf, unsigned int rel_sidx)
 		case R_ARM_JUMP_SLOT:
 			e32_process_dyn_rel(sym_tab, num_syms, str_tab,
 					    str_tab_size, rel, where);
+			break;
+		case R_ARM_TLS_DTPMOD32:
+			mod = elf;
+			e32_tls_get_module(sym_tab, num_syms, str_tab,
+					   str_tab_size, rel, &mod);
+			*where = mod->tls_mod_id;
+			break;
+		case R_ARM_TLS_DTPOFF32:
+			e32_tls_resolve(sym_tab, num_syms, str_tab,
+					str_tab_size, rel, &val);
+			*where = val;
 			break;
 		default:
 			err(TEE_ERROR_BAD_FORMAT, "Unknown relocation type %d",
