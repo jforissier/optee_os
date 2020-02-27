@@ -53,6 +53,10 @@ SECTIONS {
 	.rela.text : { *(.rela.text) *(.rela.gnu.linkonce.t*) }
 	.rel.data : { *(.rel.data) *(.rel.gnu.linkonce.d*) }
 	.rela.data : { *(.rela.data) *(.rela.gnu.linkonce.d*) }
+	.rel.tdata : { *(.rel.tdata .rel.tdata.* .rel.gnu.linkonce.td.*) }
+	.rela.tdata : { *(.rela.tdata .rela.tdata.* .rela.gnu.linkonce.td.*) }
+	.rel.tbss : { *(.rel.tbss .rel.tbss.* .rel.gnu.linkonce.tb.*) }
+	.rela.tbss : { *(.rela.tbss .rela.tbss.* .rela.gnu.linkonce.tb.*) }
 	.rel.rodata : { *(.rel.rodata) *(.rel.gnu.linkonce.r*) }
 	.rela.rodata : { *(.rela.rodata) *(.rela.gnu.linkonce.r*) }
 	.rel.dyn : { *(.rel.dyn) }
@@ -70,6 +74,10 @@ SECTIONS {
 	.rela.bss : { *(.rela.bss) }
 	.rel.plt : { *(.rel.plt) }
 	.rela.plt : { *(.rela.plt) }
+
+	/* Thread Local Storage sections */
+	.tdata : { *(.tdata .tdata.* .gnu.linkonce.td.*) }
+	.tbss : { *(.tbss .tbss.* .gnu.linkonce.tb.*) *(.tcommon) }
 
 	.data : { *(.data .data.* .gnu.linkonce.d.*) }
 	.bss : {
