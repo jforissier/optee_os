@@ -65,8 +65,16 @@ CFG_CORE_RODATA_NOEXEC ?= n
 ifeq ($(CFG_CORE_RODATA_NOEXEC),y)
 $(call force,CFG_CORE_RWDATA_NOEXEC,y)
 endif
+
 # 'y' to set the Alignment Check Enable bit in SCTLR/SCTLR_EL1, 'n' to clear it
-CFG_SCTLR_ALIGNMENT_CHECK ?= y
+# Saying 'n' here allows to run EL0 code built without -mstrict-align (Aarch64)
+# or -mno-unaligned-access (Aarch32). One notable example is the GCC C++
+# runtime libraries in the standard Linux cross-compilers (aarch64-linux-gnu
+# and arm-linux-gnueabihf).
+# EL1 code is always built with strict alignment because some parts access
+# device memory or run when the MMU is disabled. In both cases unaligned
+# accesses are forbidden.
+CFG_SCTLR_ALIGNMENT_CHECK ?= n
 
 ifeq ($(CFG_CORE_LARGE_PHYS_ADDR),y)
 $(call force,CFG_WITH_LPAE,y)
