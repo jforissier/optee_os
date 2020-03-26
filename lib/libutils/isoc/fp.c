@@ -6,6 +6,7 @@
 #include <stdio.h>
 
 struct _FILE {
+	char dummy;
 };
 
 static struct _FILE _fake_stdout;
