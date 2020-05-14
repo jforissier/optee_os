@@ -63,14 +63,10 @@ cleanfiles += $(link-out-dir$(sm))/dyn_list
 
 link-ldadd  = $(user-ta-ldadd) $(addprefix -L,$(libdirs))
 link-ldadd += --start-group
-ifeq (,$(filter %.cpp,$(srcs)))
 link-ldadd += $(addprefix -l,$(libnames))
-else
+ifneq (,$(filter %.cpp,$(srcs)))
 link-ldflags += --eh-frame-hdr
 link-ldadd += $(libstdc++$(sm)) $(libgcc_eh$(sm))
-# With C++, libutee must be linked statically or exception handling cannot work
-link-ldadd += -l:libutee.a
-link-ldadd += $(addprefix -l,$(filter-out utee,$(libnames)))
 endif
 link-ldadd += --end-group
 
