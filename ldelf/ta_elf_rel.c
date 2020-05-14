@@ -39,6 +39,12 @@ static bool __resolve_sym(struct ta_elf *elf, unsigned int st_bind,
 {
 	bool bind_ok = false;
 
+	if (!st_name)
+		return false;
+	if (st_name > elf->dynstr_size)
+		err(TEE_ERROR_BAD_FORMAT, "Symbol name out of range");
+	if (strcmp(name, elf->dynstr + st_name))
+		return false;
 	if (st_bind == STB_GLOBAL || (weak_ok && st_bind == STB_WEAK))
 		bind_ok = true;
 	if (!bind_ok)
@@ -48,13 +54,6 @@ static bool __resolve_sym(struct ta_elf *elf, unsigned int st_bind,
 		return false;
 	}
 	if (st_shndx == SHN_UNDEF || st_shndx == SHN_XINDEX)
-		return false;
-	if (!st_name)
-		return false;
-	if (st_name > elf->dynstr_size)
-		err(TEE_ERROR_BAD_FORMAT, "Symbol name out of range");
-
-	if (strcmp(name, elf->dynstr + st_name))
 		return false;
 
 	switch (st_type) {
