@@ -1,0 +1,2 @@
+- service: optee_os
+  command: bash /optee_os/codeship-ci.sh

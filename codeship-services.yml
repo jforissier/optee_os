@@ -1,0 +1,6 @@
+optee_os:
+  image: jforissier/optee_os_ci_clangbuilt
+  volumes:
+    - .:/optee_os
+  encrypted_env_file:
+    - codeship-env.encrypted
