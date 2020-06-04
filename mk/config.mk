@@ -334,6 +334,9 @@ CFG_CORE_SANITIZE_UNDEFINED ?= n
 # default
 CFG_CORE_SANITIZE_KADDRESS ?= n
 
+# Use compiler instrumentation to check stack limits in each function
+CFG_CORE_CHECK_STACKS ?= n
+
 # Device Tree support
 #
 # When CFG_DT is enabled core embeds the FDT library (libfdt) allowing

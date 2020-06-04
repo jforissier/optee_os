@@ -209,6 +209,42 @@ void thread_check_canaries(void)
 #endif/*CFG_WITH_STACK_CANARIES*/
 }
 
+#ifdef CFG_CORE_CHECK_STACKS
+static void __noprof check_stack_limits(void)
+{
+	static bool recursion;
+	vaddr_t start = 0;
+	vaddr_t end = 0;
+
+	if (recursion)
+		return;
+
+	if (!get_stack_limits(&start, &end)) {
+		/* Break recursion since panic() etc. will call this again */
+		recursion = true;
+		panic("get_stack_limits() failed");
+	}
+
+	if ((vaddr_t)&start < start) {
+		recursion = true;
+		panic("Stack overflow");
+	}
+}
+
+void __cyg_profile_func_enter(void *this_fn, void *call_site);
+void __noprof __cyg_profile_func_enter(void *this_fn __unused,
+				       void *call_site __unused)
+{
+}
+
+void __cyg_profile_func_exit(void *this_fn, void *call_site);
+void __noprof __cyg_profile_func_exit(void *this_fn __unused,
+				      void *call_site __unused)
+{
+	check_stack_limits();
+}
+#endif
+
 void thread_lock_global(void)
 {
 	cpu_spin_lock(&thread_global_lock);
@@ -220,14 +256,14 @@ void thread_unlock_global(void)
 }
 
 #ifdef ARM32
-uint32_t thread_get_exceptions(void)
+uint32_t __noprof thread_get_exceptions(void)
 {
 	uint32_t cpsr = read_cpsr();
 
 	return (cpsr >> CPSR_F_SHIFT) & THREAD_EXCP_ALL;
 }
 
-void thread_set_exceptions(uint32_t exceptions)
+void __noprof thread_set_exceptions(uint32_t exceptions)
 {
 	uint32_t cpsr = read_cpsr();
 
@@ -242,14 +278,14 @@ void thread_set_exceptions(uint32_t exceptions)
 #endif /*ARM32*/
 
 #ifdef ARM64
-uint32_t thread_get_exceptions(void)
+uint32_t __noprof thread_get_exceptions(void)
 {
 	uint32_t daif = read_daif();
 
 	return (daif >> DAIF_F_SHIFT) & THREAD_EXCP_ALL;
 }
 
-void thread_set_exceptions(uint32_t exceptions)
+void __noprof thread_set_exceptions(uint32_t exceptions)
 {
 	uint32_t daif = read_daif();
 
@@ -263,7 +299,7 @@ void thread_set_exceptions(uint32_t exceptions)
 }
 #endif /*ARM64*/
 
-uint32_t thread_mask_exceptions(uint32_t exceptions)
+uint32_t __noprof thread_mask_exceptions(uint32_t exceptions)
 {
 	uint32_t state = thread_get_exceptions();
 
@@ -271,13 +307,13 @@ uint32_t thread_mask_exceptions(uint32_t exceptions)
 	return state;
 }
 
-void thread_unmask_exceptions(uint32_t state)
+void __noprof thread_unmask_exceptions(uint32_t state)
 {
 	thread_set_exceptions(state & THREAD_EXCP_ALL);
 }
 
 
-static struct thread_core_local *get_core_local(unsigned int pos)
+static struct thread_core_local * __noprof get_core_local(unsigned int pos)
 {
 	/*
 	 * Foreign interrupts must be disabled before playing with core_local
@@ -290,11 +326,16 @@ static struct thread_core_local *get_core_local(unsigned int pos)
 	return &thread_core_local[pos];
 }
 
-struct thread_core_local *thread_get_core_local(void)
+struct thread_core_local * __noprof thread_get_core_local(void)
 {
 	unsigned int pos = get_core_pos();
 
 	return get_core_local(pos);
+}
+
+void thread_core_local_set_tmp_stack_flag(void)
+{
+	thread_get_core_local()->flags |= THREAD_CLF_TMP;
 }
 
 static void thread_lazy_save_ns_vfp(void)
@@ -402,7 +443,7 @@ void thread_init_boot_thread(void)
 	threads[0].state = THREAD_STATE_ACTIVE;
 }
 
-void thread_clr_boot_thread(void)
+void __noprof thread_clr_boot_thread(void)
 {
 	struct thread_core_local *l = thread_get_core_local();
 
@@ -442,6 +483,8 @@ void thread_alloc_and_run(uint32_t a0, uint32_t a1, uint32_t a2, uint32_t a3)
 	init_regs(threads + n, a0, a1, a2, a3);
 
 	thread_lazy_save_ns_vfp();
+
+	l->flags &= ~THREAD_CLF_TMP;
 	thread_resume(&threads[n].regs);
 	/*NOTREACHED*/
 	panic();
@@ -588,6 +631,9 @@ void *thread_get_tmp_sp(void)
 {
 	struct thread_core_local *l = thread_get_core_local();
 
+	/* FIXME not a nice thing to do in a function called "get" */
+	l->flags |= THREAD_CLF_TMP;
+
 	return (void *)l->tmp_stack_va_end;
 }
 
@@ -619,7 +665,12 @@ size_t thread_stack_size(void)
 	return STACK_THREAD_SIZE;
 }
 
-void get_stack_limits(vaddr_t *start, vaddr_t *end)
+/*
+ * Note: this function may be called from __cyg_profile_func_exit() ->
+ * check_stack_limits(), therefore it must NOT call any instrumented function
+ * which would result in infinite recursion.
+ */
+bool __noprof get_stack_limits(vaddr_t *start, vaddr_t *end)
 {
 	uint32_t exceptions = thread_mask_exceptions(THREAD_EXCP_FOREIGN_INTR);
 	unsigned int pos = get_core_pos();
@@ -638,13 +689,17 @@ void get_stack_limits(vaddr_t *start, vaddr_t *end)
 	} else if (!l->flags) {
 		/* We're using a thread stack */
 		ct = l->curr_thread;
-		assert(ct >= 0 && ct < CFG_NUM_THREADS);
+		if (ct < 0 || ct >= CFG_NUM_THREADS) {
+			/* Can't assert() due to possible recursion! */
+			return false;
+		}
 		thr = threads + ct;
 		*end = thr->stack_va_end;
 		*start = *end - STACK_THREAD_SIZE;
 	}
 
 	thread_unmask_exceptions(exceptions);
+	return true;
 }
 
 bool thread_is_from_abort_mode(void)

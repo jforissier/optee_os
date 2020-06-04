@@ -265,6 +265,8 @@ void thread_init_per_cpu(void);
 
 struct thread_core_local *thread_get_core_local(void);
 
+void thread_core_local_set_tmp_stack_flag(void);
+
 /*
  * Sets the stacks to be used by the different threads. Use THREAD_ID_0 for
  * first stack, THREAD_ID_0 + 1 for the next and so on.
@@ -561,7 +563,7 @@ size_t thread_stack_size(void);
  * Returns the start and end addresses of the current stack (thread, temporary
  * or abort stack).
  */
-void get_stack_limits(vaddr_t *start, vaddr_t *end);
+bool get_stack_limits(vaddr_t *start, vaddr_t *end);
 
 bool thread_is_in_normal_mode(void);
 

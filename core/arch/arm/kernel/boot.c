@@ -1240,6 +1240,7 @@ void __weak boot_init_primary(unsigned long pageable_part,
 unsigned long boot_cpu_on_handler(unsigned long a0 __maybe_unused,
 				  unsigned long a1 __unused)
 {
+	thread_core_local_set_tmp_stack_flag();
 	DMSG("cpu %zu: a0 0x%lx", get_core_pos(), a0);
 	init_secondary_helper(PADDR_INVALID);
 	return 0;
@@ -1247,6 +1248,7 @@ unsigned long boot_cpu_on_handler(unsigned long a0 __maybe_unused,
 #else
 void boot_init_secondary(unsigned long nsec_entry)
 {
+	thread_core_local_set_tmp_stack_flag();
 	init_secondary_helper(nsec_entry);
 }
 #endif
