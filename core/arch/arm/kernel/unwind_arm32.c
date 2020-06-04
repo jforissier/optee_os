@@ -464,7 +464,7 @@ void print_kernel_stack(int level)
 	state.registers[LR] = read_lr();
 	state.registers[PC] = (uint32_t)print_kernel_stack;
 
-	get_stack_limits(&stack_start, &stack_end);
+	get_stack_hard_limits(&stack_start, &stack_end);
 	print_stack_arm32(level, &state, exidx, exidx_sz, stack_start,
 			  stack_end - stack_start);
 }

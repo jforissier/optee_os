@@ -505,6 +505,8 @@ END_FUNC thread_unwind_user_mode
 	write_iciallu
 #endif
 
+	bl	thread_core_local_set_tmp_stack_flag
+
 	mov	r0, #THREAD_FLAGS_EXIT_ON_FOREIGN_INTR
 	mrs	r1, spsr
 	pop	{r2}

@@ -32,12 +32,17 @@
 
 #include "thread_private.h"
 
+struct thread_ctx threads[CFG_NUM_THREADS];
+
+struct thread_core_local thread_core_local[CFG_TEE_CORE_NB_CORE] __nex_bss;
+
+/* Stacks */
+
 #ifdef CFG_WITH_ARM_TRUSTED_FW
 #define STACK_TMP_OFFS		0
 #else
 #define STACK_TMP_OFFS		SM_STACK_TMP_RESERVE_SIZE
 #endif
-
 
 #ifdef ARM32
 #ifdef CFG_CORE_SANITIZE_KADDRESS
@@ -70,10 +75,6 @@
 #endif
 #endif /*ARM64*/
 
-struct thread_ctx threads[CFG_NUM_THREADS];
-
-struct thread_core_local thread_core_local[CFG_TEE_CORE_NB_CORE] __nex_bss;
-
 #ifdef CFG_WITH_STACK_CANARIES
 #ifdef ARM32
 #define STACK_CANARY_SIZE	(4 * sizeof(uint32_t))
@@ -90,17 +91,23 @@ struct thread_core_local thread_core_local[CFG_TEE_CORE_NB_CORE] __nex_bss;
 #define STACK_CANARY_SIZE	0
 #endif
 
+#ifdef CFG_CORE_DEBUG_CHECK_STACKS
+/*
+ * Extra space added to each stack in order to reliably detect and dump stack
+ * overflows. Covers the maximum (expected) overflow size plus the maximum stack
+ * space needed by __cyg_profile_func_exit() (error dump included).
+ */
+#define STACK_CHECK_EXTRA	1536
+#else
+#define STACK_CHECK_EXTRA	0
+#endif
+
 #define DECLARE_STACK(name, num_stacks, stack_size, linkage) \
 linkage uint32_t name[num_stacks] \
-		[ROUNDUP(stack_size + STACK_CANARY_SIZE, STACK_ALIGNMENT) / \
-		sizeof(uint32_t)] \
+		[ROUNDUP(stack_size + STACK_CANARY_SIZE + STACK_CHECK_EXTRA, \
+			 STACK_ALIGNMENT) / sizeof(uint32_t)] \
 		__attribute__((section(".nozi_stack." # name), \
 			       aligned(STACK_ALIGNMENT)))
-
-#define STACK_SIZE(stack) (sizeof(stack) - STACK_CANARY_SIZE / 2)
-
-#define GET_STACK(stack) \
-	((vaddr_t)(stack) + STACK_SIZE(stack))
 
 DECLARE_STACK(stack_tmp, CFG_TEE_CORE_NB_CORE, STACK_TMP_SIZE, static);
 DECLARE_STACK(stack_abt, CFG_TEE_CORE_NB_CORE, STACK_ABT_SIZE, static);
@@ -108,9 +115,15 @@ DECLARE_STACK(stack_abt, CFG_TEE_CORE_NB_CORE, STACK_ABT_SIZE, static);
 DECLARE_STACK(stack_thread, CFG_NUM_THREADS, STACK_THREAD_SIZE, static);
 #endif
 
+#define GET_STACK_TOP_HARD(stack, n) \
+	((vaddr_t)&(stack)[n] + STACK_CANARY_SIZE / 2)
+#define GET_STACK_TOP_SOFT(stack, n) \
+	(GET_STACK_TOP_HARD(stack, n) + STACK_CHECK_EXTRA)
+#define GET_STACK_BOTTOM(stack, n, size) (GET_STACK_TOP_SOFT(stack, n) + (size))
+
 const void *stack_tmp_export __section(".identity_map.stack_tmp_export") =
-	(uint8_t *)stack_tmp + sizeof(stack_tmp[0]) -
-	(STACK_TMP_OFFS + STACK_CANARY_SIZE / 2);
+	(void *)(GET_STACK_BOTTOM(stack_tmp, 0, STACK_TMP_SIZE) -
+		 STACK_TMP_OFFS);
 const uint32_t stack_tmp_stride __section(".identity_map.stack_tmp_stride") =
 	sizeof(stack_tmp[0]);
 
@@ -220,14 +233,14 @@ void thread_unlock_global(void)
 }
 
 #ifdef ARM32
-uint32_t thread_get_exceptions(void)
+uint32_t __nostackcheck thread_get_exceptions(void)
 {
 	uint32_t cpsr = read_cpsr();
 
 	return (cpsr >> CPSR_F_SHIFT) & THREAD_EXCP_ALL;
 }
 
-void thread_set_exceptions(uint32_t exceptions)
+void __nostackcheck thread_set_exceptions(uint32_t exceptions)
 {
 	uint32_t cpsr = read_cpsr();
 
@@ -242,14 +255,14 @@ void thread_set_exceptions(uint32_t exceptions)
 #endif /*ARM32*/
 
 #ifdef ARM64
-uint32_t thread_get_exceptions(void)
+uint32_t __nostackcheck thread_get_exceptions(void)
 {
 	uint32_t daif = read_daif();
 
 	return (daif >> DAIF_F_SHIFT) & THREAD_EXCP_ALL;
 }
 
-void thread_set_exceptions(uint32_t exceptions)
+void __nostackcheck thread_set_exceptions(uint32_t exceptions)
 {
 	uint32_t daif = read_daif();
 
@@ -263,7 +276,7 @@ void thread_set_exceptions(uint32_t exceptions)
 }
 #endif /*ARM64*/
 
-uint32_t thread_mask_exceptions(uint32_t exceptions)
+uint32_t __nostackcheck thread_mask_exceptions(uint32_t exceptions)
 {
 	uint32_t state = thread_get_exceptions();
 
@@ -271,13 +284,13 @@ uint32_t thread_mask_exceptions(uint32_t exceptions)
 	return state;
 }
 
-void thread_unmask_exceptions(uint32_t state)
+void __nostackcheck thread_unmask_exceptions(uint32_t state)
 {
 	thread_set_exceptions(state & THREAD_EXCP_ALL);
 }
 
 
-static struct thread_core_local *get_core_local(unsigned int pos)
+static struct thread_core_local * __nostackcheck get_core_local(unsigned int pos)
 {
 	/*
 	 * Foreign interrupts must be disabled before playing with core_local
@@ -290,17 +303,96 @@ static struct thread_core_local *get_core_local(unsigned int pos)
 	return &thread_core_local[pos];
 }
 
-struct thread_core_local *thread_get_core_local(void)
+struct thread_core_local * __nostackcheck thread_get_core_local(void)
 {
 	unsigned int pos = get_core_pos();
 
 	return get_core_local(pos);
 }
 
-void thread_core_local_set_tmp_stack_flag(void)
+void __nostackcheck thread_core_local_set_tmp_stack_flag(void)
 {
 	thread_get_core_local()->flags |= THREAD_CLF_TMP;
 }
+
+#ifdef CFG_CORE_DEBUG_CHECK_STACKS
+static void print_stack_limits(void)
+{
+	size_t n = 0;
+	vaddr_t start = 0;
+	vaddr_t end = 0;
+
+	for (n = 0; n < CFG_TEE_CORE_NB_CORE; n++) {
+		start = GET_STACK_TOP_SOFT(stack_tmp, n);
+		end = GET_STACK_BOTTOM(stack_tmp, n, STACK_TMP_SIZE);
+		DMSG("stack_tmp[%zu] 0x%" PRIxVA "..0x%" PRIxVA, n, start, end);
+	}
+	for (n = 0; n < CFG_TEE_CORE_NB_CORE; n++) {
+		start = GET_STACK_TOP_SOFT(stack_abt, n);
+		end = GET_STACK_BOTTOM(stack_abt, n, STACK_ABT_SIZE);
+		DMSG("stack_abt[%zu] 0x%" PRIxVA "..0x%" PRIxVA, n, start, end);
+	}
+	for (n = 0; n < CFG_NUM_THREADS; n++) {
+		start = GET_STACK_TOP_SOFT(stack_thread, n);
+		end = GET_STACK_BOTTOM(stack_thread, n, STACK_ABT_SIZE);
+		DMSG("stack_thread[%zu] 0x%" PRIxVA "..0x%" PRIxVA, n, start,
+		     end);
+	}
+}
+
+static void check_stack_limits(void)
+{
+#define CURRENT_SP ((vaddr_t)&stack_start)
+	vaddr_t stack_start = 0;
+	vaddr_t stack_end = 0;
+
+	if (!get_stack_soft_limits(&stack_start, &stack_end))
+		panic("Unknown stack limits");
+	if (CURRENT_SP < stack_start || CURRENT_SP > stack_end) {
+		DMSG("Stack pointer out of range (0x%" PRIxVA ")", CURRENT_SP);
+		print_stack_limits();
+		panic();
+	}
+#undef CURRENT_SP
+}
+
+static bool * __nostackcheck get_stackcheck_recursion_flag(void)
+{
+	uint32_t exceptions = thread_mask_exceptions(THREAD_EXCP_FOREIGN_INTR);
+	unsigned int pos = get_core_pos();
+	struct thread_core_local *l = get_core_local(pos);
+	int ct = l->curr_thread;
+	bool *p = NULL;
+
+	if (l->flags & (THREAD_CLF_ABORT | THREAD_CLF_TMP))
+		p = &l->stackcheck_recursion;
+	else if (!l->flags)
+		p = &threads[ct].tsd.stackcheck_recursion;
+
+	thread_unmask_exceptions(exceptions);
+	return p;
+}
+
+void __cyg_profile_func_enter(void *this_fn, void *call_site);
+void __nostackcheck __cyg_profile_func_enter(void *this_fn __unused,
+					     void *call_site __unused)
+{
+	bool *p = get_stackcheck_recursion_flag();
+
+	assert(p);
+	if (*p)
+		return;
+	*p = true;
+	check_stack_limits();
+	*p = false;
+}
+
+void __cyg_profile_func_exit(void *this_fn, void *call_site);
+void __nostackcheck __cyg_profile_func_exit(void *this_fn __unused,
+					    void *call_site __unused)
+{
+}
+#endif
 
 static void thread_lazy_save_ns_vfp(void)
 {
@@ -407,7 +499,7 @@ void thread_init_boot_thread(void)
 	threads[0].state = THREAD_STATE_ACTIVE;
 }
 
-void thread_clr_boot_thread(void)
+void __nostackcheck thread_clr_boot_thread(void)
 {
 	struct thread_core_local *l = thread_get_core_local();
 
@@ -592,7 +684,7 @@ void thread_resume_from_rpc(uint32_t thread_id, uint32_t a0, uint32_t a1,
 	panic();
 }
 
-void *thread_get_tmp_sp(void)
+void __nostackcheck *thread_get_tmp_sp(void)
 {
 	struct thread_core_local *l = thread_get_core_local();
 
@@ -633,32 +725,44 @@ size_t thread_stack_size(void)
 	return STACK_THREAD_SIZE;
 }
 
-void get_stack_limits(vaddr_t *start, vaddr_t *end)
+bool get_stack_limits(vaddr_t *start, vaddr_t *end, bool hard)
 {
 	uint32_t exceptions = thread_mask_exceptions(THREAD_EXCP_FOREIGN_INTR);
 	unsigned int pos = get_core_pos();
 	struct thread_core_local *l = get_core_local(pos);
-	struct thread_ctx *thr = NULL;
-	int ct = -1;
+	int ct __maybe_unused = l->curr_thread;
+	bool ret = false;
 
 	if (l->flags & THREAD_CLF_TMP) {
-		/* We're using the temporary stack for this core */
-		*start = (vaddr_t)stack_tmp[pos];
-		*end = *start + STACK_TMP_SIZE;
+		if (hard)
+			*start = GET_STACK_TOP_HARD(stack_tmp, pos);
+		else
+			*start = GET_STACK_TOP_SOFT(stack_tmp, pos);
+		*end = GET_STACK_BOTTOM(stack_tmp, pos, STACK_TMP_SIZE);
+		ret = true;
 	} else if (l->flags & THREAD_CLF_ABORT) {
-		/* We're using the abort stack for this core */
-		*start = (vaddr_t)stack_abt[pos];
-		*end = *start + STACK_ABT_SIZE;
-	} else if (!l->flags) {
-		/* We're using a thread stack */
-		ct = l->curr_thread;
-		assert(ct >= 0 && ct < CFG_NUM_THREADS);
-		thr = threads + ct;
-		*end = thr->stack_va_end;
-		*start = *end - STACK_THREAD_SIZE;
+		if (hard)
+			*start = GET_STACK_TOP_HARD(stack_abt, pos);
+		else
+			*start = GET_STACK_TOP_SOFT(stack_abt, pos);
+		*end = GET_STACK_BOTTOM(stack_abt, pos, STACK_ABT_SIZE);
+		ret = true;
 	}
-
+#ifndef CFG_WITH_PAGER
+	else if (!l->flags) {
+		if (ct < 0 || ct >= CFG_NUM_THREADS)
+			goto out;
+		if (hard)
+			*start = GET_STACK_TOP_HARD(stack_thread, ct);
+		else
+			*start = GET_STACK_TOP_SOFT(stack_thread, ct);
+		*end = GET_STACK_BOTTOM(stack_thread, ct, STACK_THREAD_SIZE);
+		ret = true;
+	}
+out:
+#endif
 	thread_unmask_exceptions(exceptions);
+	return ret;
 }
 
 bool thread_is_from_abort_mode(void)
@@ -912,7 +1016,8 @@ static void init_thread_stacks(void)
 
 	/* Assign the thread stacks */
 	for (n = 0; n < CFG_NUM_THREADS; n++) {
-		if (!thread_init_stack(n, GET_STACK(stack_thread[n])))
+		if (!thread_init_stack(n, GET_STACK_BOTTOM(stack_thread, n,
+							   STACK_THREAD_SIZE)))
 			panic("thread_init_stack failed");
 	}
 }
@@ -958,13 +1063,17 @@ void thread_init_threads(void)
 	}
 }
 
-void thread_clr_thread_core_local(void)
+void __nostackcheck thread_clr_thread_core_local(void)
 {
 	size_t n = 0;
+	struct thread_core_local *tcl = thread_core_local;
 
 	for (n = 0; n < CFG_TEE_CORE_NB_CORE; n++)
-		thread_core_local[n].curr_thread = -1;
-	thread_core_local[0].flags |= THREAD_CLF_TMP;
+		tcl[n].curr_thread = -1;
+
+	tcl[0].flags |= THREAD_CLF_TMP;
+	tcl[0].tmp_stack_va_end = GET_STACK_BOTTOM(stack_tmp, 0,
+						   STACK_TMP_SIZE);
 }
 
 void thread_init_primary(const struct thread_handlers *handlers)
@@ -981,7 +1090,7 @@ static void init_sec_mon(size_t pos __maybe_unused)
 {
 #if !defined(CFG_WITH_ARM_TRUSTED_FW)
 	/* Initialize secure monitor */
-	sm_init(GET_STACK(stack_tmp[pos]));
+	sm_init(GET_STACK_BOTTOM(stack_tmp, pos, STACK_TMP_SIZE));
 #endif
 }
 
@@ -1071,8 +1180,9 @@ void thread_init_per_cpu(void)
 
 	init_sec_mon(pos);
 
-	set_tmp_stack(l, GET_STACK(stack_tmp[pos]) - STACK_TMP_OFFS);
-	set_abt_stack(l, GET_STACK(stack_abt[pos]));
+	set_tmp_stack(l, GET_STACK_BOTTOM(stack_tmp, pos, STACK_TMP_SIZE) -
+		      STACK_TMP_OFFS);
+	set_abt_stack(l, GET_STACK_BOTTOM(stack_abt, pos, STACK_ABT_SIZE));
 
 	thread_init_vbar(get_excp_vect());
 
@@ -1091,7 +1201,7 @@ struct thread_specific_data *thread_get_tsd(void)
 	return &threads[thread_get_id()].tsd;
 }
 
-struct thread_ctx_regs *thread_get_ctx_regs(void)
+struct thread_ctx_regs * __nostackcheck thread_get_ctx_regs(void)
 {
 	struct thread_core_local *l = thread_get_core_local();
 

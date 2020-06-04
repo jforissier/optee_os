@@ -337,6 +337,14 @@ CFG_CORE_SANITIZE_KADDRESS ?= n
 # Add stack guards before/after stacks and periodically check them
 CFG_WITH_STACK_CANARIES ?= y
 
+# Use compiler instrumentation to troubleshoot stack overflows: checks stack
+# limits before returning from most C functions and panics immediately if SP is
+# out of range.
+CFG_CORE_DEBUG_CHECK_STACKS ?= n
+ifeq ($(CFG_CORE_DEBUG_CHECK_STACKS),y)
+$(call force,CFG_WITH_PAGER,n)
+endif
+
 # Device Tree support
 #
 # When CFG_DT is enabled core embeds the FDT library (libfdt) allowing

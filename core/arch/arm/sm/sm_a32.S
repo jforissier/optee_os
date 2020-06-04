@@ -187,6 +187,7 @@ UNWIND(	.cantunwind)
 	add	r0, sp, #(SM_CTX_NSEC + SM_NSEC_CTX_R8)
 	stm	r0, {r8-r12}
 
+	bl	thread_core_local_set_tmp_stack_flag
 	mov	r0, sp
 	bl	sm_from_nsec
 	cmp	r0, #SM_EXIT_TO_NON_SECURE

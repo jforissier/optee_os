@@ -855,6 +855,7 @@ UNWIND(	.cantunwind)
 	ldr	r0, [r0, #CORE_MMU_CONFIG_LOAD_OFFSET]
 	sub	sp, sp, r0
 #endif
+	bl	thread_core_local_set_tmp_stack_flag
 
 #if defined (CFG_BOOT_SECONDARY_REQUEST)
 	/* if L1 is not invalidated before, do it here */
