@@ -405,6 +405,7 @@ void thread_clr_boot_thread(void)
 	assert(threads[l->curr_thread].state == THREAD_STATE_ACTIVE);
 	threads[l->curr_thread].state = THREAD_STATE_FREE;
 	l->curr_thread = -1;
+	l->flags &= ~THREAD_CLF_TMP;
 }
 
 void thread_alloc_and_run(uint32_t a0, uint32_t a1, uint32_t a2, uint32_t a3)
@@ -613,6 +614,31 @@ size_t thread_stack_size(void)
 	return STACK_THREAD_SIZE;
 }
 
+void get_stack_limits(vaddr_t *start, vaddr_t *end)
+{
+	uint32_t exceptions = thread_mask_exceptions(THREAD_EXCP_FOREIGN_INTR);
+	struct thread_core_local *l = thread_get_core_local();
+	uint32_t cpu_id = get_core_pos();
+	struct thread_ctx *thr = NULL;
+
+	if (l->flags & THREAD_CLF_TMP) {
+		/* We're using the temporary stack for this core */
+		*start = (vaddr_t)stack_tmp[cpu_id];
+		*end = *start + STACK_TMP_SIZE;
+	} else if (l->flags & THREAD_CLF_ABORT) {
+		/* We're using the abort stack for this core */
+		*start = (vaddr_t)stack_abt[cpu_id];
+		*end = *start + STACK_ABT_SIZE;
+	} else if (!l->flags) {
+		/* Were using a thread stack */
+		thr = threads + l->curr_thread;
+		*end = thr->stack_va_end;
+		*start = *end - STACK_THREAD_SIZE;
+	}
+
+	thread_unmask_exceptions(exceptions);
+}
+
 bool thread_is_from_abort_mode(void)
 {
 	struct thread_core_local *l = thread_get_core_local();
@@ -634,8 +660,11 @@ bool thread_is_in_normal_mode(void)
 	struct thread_core_local *l = thread_get_core_local();
 	bool ret;
 
-	/* If any bit in l->flags is set we're handling some exception. */
-	ret = !l->flags;
+	/*
+	 * If any bit in l->flags is set aside from THREAD_CLF_TMP we're
+	 * handling some exception.
+	 */
+	ret = !(l->flags & ~THREAD_CLF_TMP);
 	thread_unmask_exceptions(exceptions);
 
 	return ret;
@@ -911,6 +940,7 @@ void thread_clr_thread_core_local(void)
 
 	for (n = 0; n < CFG_TEE_CORE_NB_CORE; n++)
 		thread_core_local[n].curr_thread = -1;
+	thread_core_local[0].flags |= THREAD_CLF_TMP;
 }
 
 void thread_init_primary(const struct thread_handlers *handlers)
