@@ -277,10 +277,8 @@ void thread_unmask_exceptions(uint32_t state)
 }
 
 
-struct thread_core_local *thread_get_core_local(void)
+static struct thread_core_local *get_core_local(unsigned int pos)
 {
-	uint32_t cpu_id = get_core_pos();
-
 	/*
 	 * Foreign interrupts must be disabled before playing with core_local
 	 * since we otherwise may be rescheduled to a different core in the
@@ -288,8 +286,15 @@ struct thread_core_local *thread_get_core_local(void)
 	 */
 	assert(thread_get_exceptions() & THREAD_EXCP_FOREIGN_INTR);
 
-	assert(cpu_id < CFG_TEE_CORE_NB_CORE);
-	return &thread_core_local[cpu_id];
+	assert(pos < CFG_TEE_CORE_NB_CORE);
+	return &thread_core_local[pos];
+}
+
+struct thread_core_local *thread_get_core_local(void)
+{
+	unsigned int pos = get_core_pos();
+
+	return get_core_local(pos);
 }
 
 static void thread_lazy_save_ns_vfp(void)
@@ -617,21 +622,24 @@ size_t thread_stack_size(void)
 void get_stack_limits(vaddr_t *start, vaddr_t *end)
 {
 	uint32_t exceptions = thread_mask_exceptions(THREAD_EXCP_FOREIGN_INTR);
-	struct thread_core_local *l = thread_get_core_local();
-	uint32_t cpu_id = get_core_pos();
+	unsigned int pos = get_core_pos();
+	struct thread_core_local *l = get_core_local(pos);
 	struct thread_ctx *thr = NULL;
+	int ct = -1;
 
 	if (l->flags & THREAD_CLF_TMP) {
 		/* We're using the temporary stack for this core */
-		*start = (vaddr_t)stack_tmp[cpu_id];
+		*start = (vaddr_t)stack_tmp[pos];
 		*end = *start + STACK_TMP_SIZE;
 	} else if (l->flags & THREAD_CLF_ABORT) {
 		/* We're using the abort stack for this core */
-		*start = (vaddr_t)stack_abt[cpu_id];
+		*start = (vaddr_t)stack_abt[pos];
 		*end = *start + STACK_ABT_SIZE;
 	} else if (!l->flags) {
-		/* Were using a thread stack */
-		thr = threads + l->curr_thread;
+		/* We're using a thread stack */
+		ct = l->curr_thread;
+		assert(ct >= 0 && ct < CFG_NUM_THREADS);
+		thr = threads + ct;
 		*end = thr->stack_va_end;
 		*start = *end - STACK_THREAD_SIZE;
 	}
