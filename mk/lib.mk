@@ -59,7 +59,7 @@ $(lib-libfile): $(objs)
 	$$(q)rm -f $$@ && $$(AR$(sm)) rcs $$@ $$^
 endif
 ifeq ($(CFG_ULIBS_SHARED),y)
-$(lib-shlibfile): $(objs) $(lib-needed-so-files)
+$(lib-shlibfile): $(objs) | $(lib-needed-so-files)
 	@$(cmd-echo-silent) '  LD      $$@'
 	@mkdir -p $$(dir $$@)
 	$$(q)$$(LD$(sm)) $(lib-ldflags) -shared -z max-page-size=4096 \
