@@ -16,7 +16,15 @@ build:
     - export CFG_DEBUG_INFO=n
     - export CFG_WERROR=y
     - function _make() { make -j$(getconf _NPROCESSORS_ONLN) -s O=out $* && ccache -s && ccache -z; }
-    - ccache -z
+
+      # Secondary cache to be able to save something mid-way in case the build times out
+    - export PROJ=$ORG_NAME-$REPO_NAME
+    - export SCP_OPT="-o ConnectTimeout=10 -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null"
+    - function download_secondary_cache() { scp $SCP_OPT -P 50022 shippable@w540.forissier.org:ccache-$PROJ.tar.gz /root && tar xf /root/ccache-$PROJ.tar.gz -C /root; true; }
+    - function upload_secondary_cache() { tar czf /root/ccache-$PROJ.tar.gz -C /root .ccache && scp $SCP_OPT -P 50022 /root/ccache-$PROJ.tar.gz shippable@w540.forissier.org:./; true; }
+    - download_secondary_cache
+
+    - ccache -M 2G -s -z
 
     - _make
     - _make COMPILER=clang
@@ -98,6 +106,7 @@ build:
     - _make PLATFORM=imx-mx8mqevk
     - _make PLATFORM=imx-mx8qxpmek
     - _make PLATFORM=imx-mx8qmmek
+    - upload_secondary_cache
     - _make PLATFORM=k3-j721e
     - _make PLATFORM=k3-j721e CFG_ARM64_core=y
     - _make PLATFORM=k3-am65x
@@ -143,3 +152,4 @@ build:
     - _make PLATFORM=bcm-ns3 CFG_ARM64_core=y
     - _make PLATFORM=hisilicon-hi3519av100_demo
     - _make PLATFORM=amlogic
+    - upload_secondary_cache
