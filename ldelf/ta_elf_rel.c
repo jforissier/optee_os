@@ -35,18 +35,25 @@ static uint32_t elf_hash(const char *name)
 static bool __resolve_sym(struct ta_elf *elf, unsigned int st_bind,
 			  unsigned int st_type, size_t st_shndx,
 			  size_t st_name, size_t st_value, const char *name,
-			  vaddr_t *val)
+			  vaddr_t *val, bool weak_ok, bool *found_weak_undef)
 {
-	if (st_bind != STB_GLOBAL)
-		return false;
-	if (st_shndx == SHN_UNDEF || st_shndx == SHN_XINDEX)
-		return false;
+	bool bind_ok = false;
+
 	if (!st_name)
 		return false;
 	if (st_name > elf->dynstr_size)
 		err(TEE_ERROR_BAD_FORMAT, "Symbol name out of range");
-
 	if (strcmp(name, elf->dynstr + st_name))
+		return false;
+	if (st_bind == STB_GLOBAL || (weak_ok && st_bind == STB_WEAK))
+		bind_ok = true;
+	if (!bind_ok)
+		return false;
+	if (st_bind == STB_WEAK && st_shndx == SHN_UNDEF) {
+		*found_weak_undef = true;
+		return false;
+	}
+	if (st_shndx == SHN_UNDEF || st_shndx == SHN_XINDEX)
 		return false;
 
 	if (st_value > (elf->max_addr - elf->load_addr))
@@ -66,7 +73,8 @@ static bool __resolve_sym(struct ta_elf *elf, unsigned int st_bind,
 }
 
 static TEE_Result resolve_sym_helper(uint32_t hash, const char *name,
-				     vaddr_t *val, struct ta_elf *elf)
+				     vaddr_t *val, struct ta_elf *elf,
+				     bool weak_ok, bool *found_weak_undef)
 {
 	/*
 	 * Using uint32_t here for convenience because both Elf64_Word
@@ -98,7 +106,8 @@ static TEE_Result resolve_sym_helper(uint32_t hash, const char *name,
 					  ELF32_ST_TYPE(sym[n].st_info),
 					  sym[n].st_shndx,
 					  sym[n].st_name,
-					  sym[n].st_value, name, val))
+					  sym[n].st_value, name, val, weak_ok,
+					  found_weak_undef))
 				return TEE_SUCCESS;
 		}
 	} else {
@@ -120,7 +129,8 @@ static TEE_Result resolve_sym_helper(uint32_t hash, const char *name,
 					  ELF64_ST_TYPE(sym[n].st_info),
 					  sym[n].st_shndx,
 					  sym[n].st_name,
-					  sym[n].st_value, name, val))
+					  sym[n].st_value, name, val, weak_ok,
+					  found_weak_undef))
 				return TEE_SUCCESS;
 		}
 	}
@@ -128,17 +138,46 @@ static TEE_Result resolve_sym_helper(uint32_t hash, const char *name,
 	return TEE_ERROR_ITEM_NOT_FOUND;
 }
 
+/*
+ * Look for named symbol in @elf, or all modules if @elf == NULL. Global symbols
+ * are searched first, then weak ones. Last option, when at least one weak but
+ * undefined symbol exists, resolve to zero. Otherwise return
+ * TEE_ERROR_ITEM_NOT_FOUND.
+ */
 TEE_Result ta_elf_resolve_sym(const char *name, vaddr_t *val,
 			      struct ta_elf *elf)
 {
 	uint32_t hash = elf_hash(name);
+	bool found_weak_undef = false;
 
-	if (elf)
-		return resolve_sym_helper(hash, name, val, elf);
-
-	TAILQ_FOREACH(elf, &main_elf_queue, link)
-		if (!resolve_sym_helper(hash, name, val, elf))
+	if (elf) {
+		/* Search global symbols */
+		if (!resolve_sym_helper(hash, name, val, elf, false, NULL))
 			return TEE_SUCCESS;
+		/* Search weak symbols */
+		if (!resolve_sym_helper(hash, name, val, elf, true,
+					&found_weak_undef))
+			return TEE_SUCCESS;
+		if (found_weak_undef) {
+			*val = 0;
+			return TEE_SUCCESS;
+		}
+	}
+
+	TAILQ_FOREACH(elf, &main_elf_queue, link) {
+		if (!resolve_sym_helper(hash, name, val, elf, false, NULL))
+			return TEE_SUCCESS;
+	}
+
+	TAILQ_FOREACH(elf, &main_elf_queue, link) {
+		if (!resolve_sym_helper(hash, name, val, elf, true,
+					&found_weak_undef))
+			return TEE_SUCCESS;
+		if (found_weak_undef) {
+			*val = 0;
+			return TEE_SUCCESS;
+		}
+	}
 
 	return TEE_ERROR_ITEM_NOT_FOUND;
 }
