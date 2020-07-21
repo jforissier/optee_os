@@ -429,6 +429,37 @@ static void e64_process_dyn_rela(const Elf64_Sym *sym_tab, size_t num_syms,
 	*where = val;
 }
 
+static void e64_get_sym_name(const Elf64_Sym *sym_tab, size_t num_syms,
+			     const char *str_tab, size_t str_tab_size,
+			     Elf64_Rela *rela, const char **name)
+{
+	size_t sym_idx = 0;
+	size_t name_idx = 0;
+
+	sym_idx = ELF64_R_SYM(rela->r_info);
+	if (sym_idx >= num_syms)
+		err(TEE_ERROR_BAD_FORMAT, "Symbol index out of range");
+	sym_idx = confine_array_index(sym_idx, num_syms);
+
+	name_idx = sym_tab[sym_idx].st_name;
+	if (name_idx >= str_tab_size)
+		err(TEE_ERROR_BAD_FORMAT, "Name index out of range");
+	*name = str_tab + name_idx;
+}
+
+static void e64_process_tls_rela(const Elf64_Sym *sym_tab, size_t num_syms,
+				 const char *str_tab, size_t str_tab_size,
+				 Elf64_Rela *rela, Elf64_Addr *where)
+{
+	struct ta_elf *mod = NULL;
+	const char *name = NULL;
+	vaddr_t symval = 0;
+
+	e64_get_sym_name(sym_tab, num_syms, str_tab, str_tab_size, rela, &name);
+	ta_elf_resolve_sym2(name, &symval, &mod, NULL);
+	*where = symval + mod->tls_tcb_offs + rela->r_addend;
+}
+
 static void e64_relocate(struct ta_elf *elf, unsigned int rel_sidx)
 {
 	Elf64_Shdr *shdr = elf->shdr;
@@ -531,6 +562,10 @@ static void e64_relocate(struct ta_elf *elf, unsigned int rel_sidx)
 		case R_AARCH64_GLOB_DAT:
 		case R_AARCH64_JUMP_SLOT:
 			e64_process_dyn_rela(sym_tab, num_syms, str_tab,
+					     str_tab_size, rela, where);
+			break;
+		case R_AARCH64_TLS_TPREL:
+			e64_process_tls_rela(sym_tab, num_syms, str_tab,
 					     str_tab_size, rela, where);
 			break;
 		default:
