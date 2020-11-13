@@ -277,7 +277,8 @@ int mbedtls_dhm_read_public( mbedtls_dhm_context *ctx,
 /*
  * Create own private value X and export G^X
  */
-int mbedtls_dhm_make_public( mbedtls_dhm_context *ctx, int x_size,
+int mbedtls_dhm_make_public2( mbedtls_dhm_context *ctx, int x_size,
+                     const mbedtls_mpi *Q,
                      unsigned char *output, size_t olen,
                      int (*f_rng)(void *, unsigned char *, size_t),
                      void *p_rng )
@@ -293,6 +294,9 @@ int mbedtls_dhm_make_public( mbedtls_dhm_context *ctx, int x_size,
     if( mbedtls_mpi_cmp_int( &ctx->P, 0 ) == 0 )
         return( MBEDTLS_ERR_DHM_BAD_INPUT_DATA );
 
+    if( Q && mbedtls_mpi_cmp_int( Q, 0 ) == 0 )
+        return( MBEDTLS_ERR_DHM_BAD_INPUT_DATA );
+
     /*
      * generate X and calculate GX = G^X mod P
      */
@@ -303,10 +307,15 @@ int mbedtls_dhm_make_public( mbedtls_dhm_context *ctx, int x_size,
         while( mbedtls_mpi_cmp_mpi( &ctx->X, &ctx->P ) >= 0 )
             MBEDTLS_MPI_CHK( mbedtls_mpi_shift_r( &ctx->X, 1 ) );
 
+	if (Q != NULL)
+            while( mbedtls_mpi_cmp_mpi( &ctx->X, Q ) >= 0 )
+                MBEDTLS_MPI_CHK( mbedtls_mpi_shift_r( &ctx->X, 1 ) );
+
         if( count++ > 10 )
             return( MBEDTLS_ERR_DHM_MAKE_PUBLIC_FAILED );
     }
-    while( dhm_check_range( &ctx->X, &ctx->P ) != 0 );
+    while( dhm_check_range( &ctx->X, &ctx->P ) != 0 ||
+           ( Q != NULL && (dhm_check_range( &ctx->X, Q ) != 0) ) );
 
     MBEDTLS_MPI_CHK( mbedtls_mpi_exp_mod( &ctx->GX, &ctx->G, &ctx->X,
                           &ctx->P , &ctx->RP ) );
@@ -322,6 +331,18 @@ cleanup:
         return( MBEDTLS_ERR_DHM_MAKE_PUBLIC_FAILED + ret );
 
     return( 0 );
+}
+
+/*
+ * Create own private value X and export G^X
+ */
+int mbedtls_dhm_make_public( mbedtls_dhm_context *ctx, int x_size,
+                     unsigned char *output, size_t olen,
+                     int (*f_rng)(void *, unsigned char *, size_t),
+                     void *p_rng )
+{
+    return mbedtls_dhm_make_public2( ctx, x_size, NULL, output, olen, f_rng,
+                                     p_rng );
 }
 
 /*

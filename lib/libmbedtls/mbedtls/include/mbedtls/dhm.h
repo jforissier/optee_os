@@ -257,6 +257,18 @@ int mbedtls_dhm_make_public( mbedtls_dhm_context *ctx, int x_size,
                      void *p_rng );
 
 /**
+ * \brief          Same as \p mbedtls_dhm_make_public with an additional
+ *                 constraint on the generated private key X
+ * \param Q        Constrains the private key value to be in the range [2, Q-2].
+ *                 Can be \c NULL.
+ */
+int mbedtls_dhm_make_public2( mbedtls_dhm_context *ctx, int x_size,
+                     const mbedtls_mpi *Q,
+                     unsigned char *output, size_t olen,
+                     int (*f_rng)(void *, unsigned char *, size_t),
+                     void *p_rng );
+
+/**
  * \brief          This function derives and exports the shared secret
  *                 \c (G^Y)^X mod \c P.
  *
