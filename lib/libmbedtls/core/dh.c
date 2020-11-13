@@ -43,7 +43,7 @@ err:
 }
 
 TEE_Result crypto_acipher_gen_dh_key(struct dh_keypair *key,
-				     struct bignum *q __unused,
+				     struct bignum *q,
 				     size_t xbits, size_t key_size)
 {
 	TEE_Result res = TEE_SUCCESS;
@@ -74,8 +74,9 @@ TEE_Result crypto_acipher_gen_dh_key(struct dh_keypair *key,
 		res = TEE_ERROR_OUT_OF_MEMORY;
 		goto out;
 	}
-	lmd_res = mbedtls_dhm_make_public(&dhm, (int)xbytes, buf,
-					  dhm.len, mbd_rand, NULL);
+	lmd_res = mbedtls_dhm_make_public2(&dhm, (int)xbytes,
+					   (const mbedtls_mpi *)q, buf,
+					   dhm.len, mbd_rand, NULL);
 	if (lmd_res != 0) {
 		FMSG("mbedtls_dhm_make_public err, return is 0x%x", -lmd_res);
 		res = TEE_ERROR_BAD_PARAMETERS;
