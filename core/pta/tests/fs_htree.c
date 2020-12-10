@@ -5,6 +5,7 @@
 
 #include <assert.h>
 #include <kernel/ts_manager.h>
+#include <stdlib.h>
 #include <string.h>
 #include <tee/fs_htree.h>
 #include <tee/tee_fs_rpc.h>

@@ -10,7 +10,6 @@
 #include <kernel/panic.h>
 #include <kernel/pseudo_ta.h>
 #include <kernel/stmm_sp.h>
-#include <kernel/tee_common.h>
 #include <kernel/tee_misc.h>
 #include <kernel/tee_ta_manager.h>
 #include <kernel/tee_time.h>

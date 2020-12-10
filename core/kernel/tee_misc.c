@@ -3,7 +3,6 @@
  * Copyright (c) 2014, STMicroelectronics International N.V.
  */
 #include <stdio.h>
-#include <kernel/tee_common.h>
 #include <kernel/chip_services.h>
 #include <kernel/tee_misc.h>
 #include <mm/core_memprot.h>

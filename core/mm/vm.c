@@ -9,7 +9,6 @@
 #include <initcall.h>
 #include <kernel/panic.h>
 #include <kernel/spinlock.h>
-#include <kernel/tee_common.h>
 #include <kernel/tee_misc.h>
 #include <kernel/tlb_helpers.h>
 #include <kernel/user_mode_ctx.h>

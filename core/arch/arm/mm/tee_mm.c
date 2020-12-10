@@ -5,7 +5,6 @@
 
 #include <kernel/panic.h>
 #include <kernel/spinlock.h>
-#include <kernel/tee_common.h>
 #include <mm/tee_mm.h>
 #include <mm/tee_pager.h>
 #include <trace.h>

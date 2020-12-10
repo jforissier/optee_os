@@ -7,7 +7,6 @@
 #include <compiler.h>
 #include <kernel/chip_services.h>
 #include <kernel/pseudo_ta.h>
-#include <kernel/tee_common.h>
 #include <kernel/tee_common_otp.h>
 #include <kernel/tee_ta_manager.h>
 #include <kernel/tee_time.h>

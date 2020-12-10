@@ -2,7 +2,6 @@
 /*
  * Copyright (c) 2014, STMicroelectronics International N.V.
  */
-#include <kernel/tee_common.h>
 #include <kernel/tee_l2cc_mutex.h>
 #include <kernel/spinlock.h>
 #include <mm/tee_mm.h>

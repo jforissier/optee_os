@@ -9,7 +9,6 @@
 
 #include <assert.h>
 #include <kernel/mutex.h>
-#include <kernel/tee_common.h>
 #include <kernel/ts_manager.h>
 #include <mm/tee_mmu_types.h>
 #include <sys/queue.h>

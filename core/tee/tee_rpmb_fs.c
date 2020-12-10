@@ -10,7 +10,6 @@
 #include <kernel/msg_param.h>
 #include <kernel/mutex.h>
 #include <kernel/panic.h>
-#include <kernel/tee_common.h>
 #include <kernel/tee_common_otp.h>
 #include <kernel/tee_misc.h>
 #include <kernel/thread.h>
