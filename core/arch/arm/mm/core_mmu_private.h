@@ -5,6 +5,7 @@
 #ifndef CORE_MMU_PRIVATE_H
 #define CORE_MMU_PRIVATE_H
 
+#include <assert_ext.h>
 #include <mm/core_mmu.h>
 #include <mm/tee_mmu_types.h>
 

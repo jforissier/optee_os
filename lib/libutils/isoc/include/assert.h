@@ -24,10 +24,4 @@ void _assert_log(const char *expr, const char *file, const int line,
 		} \
 	} while (0)
 #endif
-
-#define COMPILE_TIME_ASSERT(x) \
-	do { \
-		switch (0) { case 0: case ((x) ? 1: 0): default : break; } \
-	} while (0)
-
 #endif

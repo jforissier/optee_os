@@ -4,6 +4,7 @@
  * Copyright (c) 2014, STMicroelectronics International N.V.
  */
 #include <arm.h>
+#include <assert_ext.h>
 #include <compiler.h>
 #include <config.h>
 #include <kernel/misc.h>

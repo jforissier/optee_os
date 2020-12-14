@@ -4,6 +4,7 @@
  */
 
 #include <assert.h>
+#include <assert_ext.h>
 #include <drivers/stm32mp1_rcc.h>
 #include <dt-bindings/clock/stm32mp1-clks.h>
 #include <initcall.h>

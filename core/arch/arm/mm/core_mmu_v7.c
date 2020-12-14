@@ -6,6 +6,7 @@
 
 #include <arm.h>
 #include <assert.h>
+#include <assert_ext.h>
 #include <keep.h>
 #include <kernel/cache_helpers.h>
 #include <kernel/misc.h>

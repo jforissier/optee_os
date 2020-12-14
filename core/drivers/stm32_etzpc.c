@@ -16,6 +16,7 @@
  */
 
 #include <assert.h>
+#include <assert_ext.h>
 #include <drivers/stm32_etzpc.h>
 #include <initcall.h>
 #include <io.h>

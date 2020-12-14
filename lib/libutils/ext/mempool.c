@@ -6,6 +6,7 @@
 
 
 #include <assert.h>
+#include <assert_ext.h>
 #include <compiler.h>
 #include <malloc.h>
 #include <mempool.h>

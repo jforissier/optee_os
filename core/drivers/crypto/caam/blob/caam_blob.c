@@ -3,6 +3,7 @@
  * Copyright 2020 Pengutronix, Rouven Czerwinski <entwicklung@pengutronix.de>
  */
 
+#include <assert_ext.h>
 #include <caam_blob.h>
 #include <caam_common.h>
 #include <caam_hal_ctrl.h>

@@ -5,7 +5,7 @@
  */
 
 #include <arm.h>
-#include <assert.h>
+#include <assert_ext.h>
 #include <kernel/abort.h>
 #include <kernel/misc.h>
 #include <kernel/panic.h>

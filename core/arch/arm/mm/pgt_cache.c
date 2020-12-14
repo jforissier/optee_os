@@ -4,6 +4,7 @@
  */
 
 #include <assert.h>
+#include <assert_ext.h>
 #include <kernel/mutex.h>
 #include <kernel/tee_misc.h>
 #include <mm/core_mmu.h>

@@ -59,6 +59,7 @@
 
 #include <arm.h>
 #include <assert.h>
+#include <assert_ext.h>
 #include <compiler.h>
 #include <inttypes.h>
 #include <keep.h>

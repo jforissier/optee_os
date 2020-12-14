@@ -10,7 +10,7 @@
  * profiled too.
  */
 
-#include <assert.h>
+#include <assert_ext.h>
 #include <user_ta_header.h>
 #if defined(__KERNEL__)
 #include <arm.h>

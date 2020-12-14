@@ -2,7 +2,7 @@
 /*
  * Copyright (c) 2018, Linaro limited
  */
-#include <assert.h>
+#include <assert_ext.h>
 #include <mbedtls/bignum.h>
 #include <mempool.h>
 #include <stdio.h>

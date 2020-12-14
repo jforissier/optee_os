@@ -3,6 +3,7 @@
  * Copyright (c) 2017, Linaro Limited
  */
 
+#include <assert_ext.h>
 #include <kernel/pseudo_ta.h>
 #include <tee/tadb.h>
 #include <pta_secstor_ta_mgmt.h>

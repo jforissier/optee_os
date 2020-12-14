@@ -4,6 +4,7 @@
  */
 
 #include <assert.h>
+#include <assert_ext.h>
 #include <kernel/ts_manager.h>
 #include <stdlib.h>
 #include <string.h>

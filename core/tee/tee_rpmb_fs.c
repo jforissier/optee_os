@@ -4,6 +4,7 @@
  */
 
 #include <assert.h>
+#include <assert_ext.h>
 #include <crypto/crypto.h>
 #include <kernel/huk_subkey.h>
 #include <kernel/misc.h>

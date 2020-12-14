@@ -4,6 +4,7 @@
  */
 
 #include <assert.h>
+#include <assert_ext.h>
 #include <crypto/crypto.h>
 #include <crypto/crypto_impl.h>
 #include <crypto/internal_aes-gcm.h>

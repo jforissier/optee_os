@@ -8,6 +8,7 @@
  */
 
 #include <assert.h>
+#include <assert_ext.h>
 #include <crypto/crypto.h>
 #include <kernel/mutex.h>
 #include <kernel/refcount.h>

@@ -3,6 +3,7 @@
  * Copyright (c) 2017-2019, STMicroelectronics
  */
 
+#include <assert_ext.h>
 #include <drivers/stm32_etzpc.h>
 #include <drivers/stm32_gpio.h>
 #include <drivers/stm32mp1_etzpc.h>

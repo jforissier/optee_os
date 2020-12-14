@@ -8,6 +8,7 @@
 
 #ifndef __ASSEMBLER__
 #include <assert.h>
+#include <assert_ext.h>
 #include <compiler.h>
 #include <kernel/user_ta.h>
 #include <mm/tee_mmu_types.h>

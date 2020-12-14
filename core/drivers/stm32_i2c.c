@@ -10,6 +10,7 @@
  */
 
 #include <arm.h>
+#include <assert_ext.h>
 #include <drivers/stm32_i2c.h>
 #include <io.h>
 #include <kernel/delay.h>

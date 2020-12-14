@@ -37,6 +37,7 @@
  *
  * Tom St Denis, tomstdenis@gmail.com, http://libtom.org
  */
+#include <assert_ext.h>
 #include <crypto/crypto_accel.h>
 #include <tomcrypt_private.h>
 /**

@@ -4,6 +4,7 @@
  * Copyright (c) 2019-2020, Linaro Limited
  */
 #include <assert.h>
+#include <assert_ext.h>
 #include <drivers/scmi-msg.h>
 #include <drivers/scmi.h>
 #include <io.h>

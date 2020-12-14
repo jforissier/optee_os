@@ -4,6 +4,7 @@
  */
 
 #include <assert.h>
+#include <assert_ext.h>
 #include <confine_array_index.h>
 #include <pkcs11_ta.h>
 #include <printk.h>

@@ -5,6 +5,7 @@
 
 #include <arm.h>
 #include <assert.h>
+#include <assert_ext.h>
 #include <compiler.h>
 #include <config.h>
 #include <console.h>

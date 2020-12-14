@@ -15,7 +15,7 @@
  * RNG - Random Number Generator
  */
 
-#include <assert.h>
+#include <assert_ext.h>
 #include <compiler.h>
 #include <crypto/crypto.h>
 #include <initcall.h>

@@ -4,6 +4,7 @@
  */
 
 #include <assert.h>
+#include <assert_ext.h>
 #include <ctype.h>
 #include <elf32.h>
 #include <elf64.h>

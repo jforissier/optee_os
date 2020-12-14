@@ -4,6 +4,7 @@
  * Copyright (c) 2016-2018, Linaro Limited
  */
 
+#include <assert_ext.h>
 #include <boot_api.h>
 #include <config.h>
 #include <console.h>

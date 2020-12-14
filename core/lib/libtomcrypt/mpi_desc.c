@@ -3,6 +3,7 @@
  * Copyright (c) 2018, Linaro Limited
  */
 
+#include <assert_ext.h>
 #include <crypto/crypto.h>
 #include <kernel/panic.h>
 #include <mbedtls/bignum.h>

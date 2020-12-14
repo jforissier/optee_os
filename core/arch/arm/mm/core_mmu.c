@@ -6,6 +6,7 @@
 
 #include <arm.h>
 #include <assert.h>
+#include <assert_ext.h>
 #include <bitstring.h>
 #include <config.h>
 #include <kernel/boot.h>

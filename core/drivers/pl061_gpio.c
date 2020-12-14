@@ -4,6 +4,7 @@
  */
 
 #include <assert.h>
+#include <assert_ext.h>
 #include <drivers/pl061_gpio.h>
 #include <io.h>
 #include <keep.h>

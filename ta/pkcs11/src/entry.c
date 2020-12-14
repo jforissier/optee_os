@@ -3,7 +3,7 @@
  * Copyright (c) 2018-2020, Linaro Limited
  */
 
-#include <assert.h>
+#include <assert_ext.h>
 #include <compiler.h>
 #include <pkcs11_ta.h>
 #include <tee_internal_api.h>

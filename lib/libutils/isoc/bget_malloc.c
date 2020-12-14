@@ -77,6 +77,7 @@
 #define BufStats    1
 #endif
 
+#include <assert_ext.h>
 #include <compiler.h>
 #include <malloc.h>
 #include <stdbool.h>

@@ -9,6 +9,7 @@
 
 #include <arm.h>
 #include <assert.h>
+#include <assert_ext.h>
 #include <config.h>
 #include <io.h>
 #include <keep.h>
