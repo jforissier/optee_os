@@ -4,10 +4,11 @@
  */
 #ifndef TEE_L2CC_MUTEX_H
 #define TEE_L2CC_MUTEX_H
-#include <inttypes.h>
-#include <tee_api_types.h>
-#include <tee_api_defines.h>
 #include <compiler.h>
+#include <inttypes.h>
+#include <tee_api_defines.h>
+#include <tee_api_types.h>
+#include <types_ext.h>
 
 #if defined(CFG_PL310)
 TEE_Result tee_enable_l2cc_mutex(void);
