@@ -3,7 +3,7 @@
  * Copyright (c) 2014, STMicroelectronics International N.V.
  */
 
-#include <mm/vm.h>
+#include <kernel/user_ta.h>
 #include <stdlib.h>
 #include <tee_api_defines.h>
 #include <tee/tee_fs.h>
