@@ -7,8 +7,6 @@
 #include <assert_ext.h>
 #include <crypto/crypto.h>
 #include <kernel/huk_subkey.h>
-#include <kernel/misc.h>
-#include <kernel/msg_param.h>
 #include <kernel/mutex.h>
 #include <kernel/panic.h>
 #include <kernel/tee_common_otp.h>
@@ -18,6 +16,7 @@
 #include <mm/mobj.h>
 #include <mm/tee_mm.h>
 #include <optee_rpc_cmd.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string_ext.h>
 #include <string.h>
