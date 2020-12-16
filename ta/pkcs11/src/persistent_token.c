@@ -122,7 +122,7 @@ enum pkcs11_rc verify_pin(enum pkcs11_user_type user, const uint8_t *pin,
 	if (rc)
 		return rc;
 
-	if (buf_compare_ct(tmp_hash, hash, TEE_MAX_HASH_SIZE))
+	if (consttime_memcmp(tmp_hash, hash, TEE_MAX_HASH_SIZE))
 		rc = PKCS11_CKR_PIN_INCORRECT;
 
 	return rc;
