@@ -826,8 +826,8 @@ static TEE_Result tee_rpmb_resp_unpack_verify(struct rpmb_data_frame *datafrm,
 	}
 
 	if (rawdata->nonce) {
-		if (buf_compare_ct(rawdata->nonce, lastfrm.nonce,
-				   RPMB_NONCE_SIZE) != 0) {
+		if (consttime_memcmp(rawdata->nonce, lastfrm.nonce,
+				     RPMB_NONCE_SIZE) != 0) {
 			DMSG("Nonce mismatched");
 			return TEE_ERROR_SECURITY;
 		}
