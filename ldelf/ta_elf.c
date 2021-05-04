@@ -189,8 +189,8 @@ static void read_dyn(struct ta_elf *elf, vaddr_t addr,
 	}
 }
 
-static void save_hashtab_from_segment(struct ta_elf *elf, unsigned int type,
-				      vaddr_t addr, size_t memsz)
+static void save_hash_from_segment(struct ta_elf *elf, unsigned int type,
+				   vaddr_t addr, size_t memsz)
 {
 	size_t dyn_entsize = 0;
 	size_t num_dyns = 0;
@@ -214,7 +214,7 @@ static void save_hashtab_from_segment(struct ta_elf *elf, unsigned int type,
 	for (n = 0; n < num_dyns; n++) {
 		read_dyn(elf, addr, n, &tag, &val);
 		if (tag == DT_HASH) {
-			elf->hashtab = (void *)(val + elf->load_addr);
+			elf->hash = (void *)(val + elf->load_addr);
 			break;
 		}
 	}
@@ -236,8 +236,8 @@ static void check_range(struct ta_elf *elf, const char *name, const void *ptr,
 		    "%s %p..%#zx out of range", name, ptr, max_addr);
 }
 
-static void check_hashtab(struct ta_elf *elf, void *ptr, size_t num_buckets,
-			  size_t num_chains)
+static void check_hash(struct ta_elf *elf, void *ptr, size_t num_buckets,
+		       size_t num_chains)
 {
 	/*
 	 * Starting from 2 as the first two words are mandatory and hold
@@ -260,30 +260,30 @@ static void check_hashtab(struct ta_elf *elf, void *ptr, size_t num_buckets,
 	check_range(elf, "DT_HASH", ptr, sz);
 }
 
-static void save_hashtab(struct ta_elf *elf)
+static void save_hash(struct ta_elf *elf)
 {
-	uint32_t *hashtab = NULL;
+	uint32_t *hash = NULL;
 	size_t n = 0;
 
 	if (elf->is_32bit) {
 		Elf32_Phdr *phdr = elf->phdr;
 
 		for (n = 0; n < elf->e_phnum; n++)
-			save_hashtab_from_segment(elf, phdr[n].p_type,
-						  phdr[n].p_vaddr,
-						  phdr[n].p_memsz);
+			save_hash_from_segment(elf, phdr[n].p_type,
+					       phdr[n].p_vaddr,
+					       phdr[n].p_memsz);
 	} else {
 		Elf64_Phdr *phdr = elf->phdr;
 
 		for (n = 0; n < elf->e_phnum; n++)
-			save_hashtab_from_segment(elf, phdr[n].p_type,
-						  phdr[n].p_vaddr,
-						  phdr[n].p_memsz);
+			save_hash_from_segment(elf, phdr[n].p_type,
+					       phdr[n].p_vaddr,
+					       phdr[n].p_memsz);
 	}
 
-	check_hashtab(elf, elf->hashtab, 0, 0);
-	hashtab = elf->hashtab;
-	check_hashtab(elf, elf->hashtab, hashtab[0], hashtab[1]);
+	check_hash(elf, elf->hash, 0, 0);
+	hash = elf->hash;
+	check_hash(elf, elf->hash, hash[0], hash[1]);
 }
 
 static void save_soname_from_segment(struct ta_elf *elf, unsigned int type,
@@ -421,7 +421,7 @@ static void save_symtab(struct ta_elf *elf)
 
 	}
 
-	save_hashtab(elf);
+	save_hash(elf);
 	save_soname(elf);
 }
 

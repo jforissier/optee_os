@@ -78,7 +78,7 @@ static bool __resolve_sym(struct ta_elf *elf, unsigned int st_bind,
 	return true;
 }
 
-static TEE_Result resolve_sym_helper(uint32_t hash, const char *name,
+static TEE_Result resolve_sym_helper(uint32_t hash_val, const char *name,
 				     vaddr_t *val, struct ta_elf *elf,
 				     bool weak_ok)
 {
@@ -86,17 +86,17 @@ static TEE_Result resolve_sym_helper(uint32_t hash, const char *name,
 	 * Using uint32_t here for convenience because both Elf64_Word
 	 * and Elf32_Word are 32-bit types
 	 */
-	uint32_t *hashtab = elf->hashtab;
-	uint32_t nbuckets = hashtab[0];
-	uint32_t nchains = hashtab[1];
-	uint32_t *bucket = &hashtab[2];
+	uint32_t *hash = elf->hash;
+	uint32_t nbuckets = hash[0];
+	uint32_t nchains = hash[1];
+	uint32_t *bucket = &hash[2];
 	uint32_t *chain = &bucket[nbuckets];
 	size_t n = 0;
 
 	if (elf->is_32bit) {
 		Elf32_Sym *sym = elf->dynsymtab;
 
-		for (n = bucket[hash % nbuckets]; n; n = chain[n]) {
+		for (n = bucket[hash_val % nbuckets]; n; n = chain[n]) {
 			if (n >= nchains || n >= elf->num_dynsyms)
 				err(TEE_ERROR_BAD_FORMAT,
 				    "Index out of range");
@@ -118,7 +118,7 @@ static TEE_Result resolve_sym_helper(uint32_t hash, const char *name,
 	} else {
 		Elf64_Sym *sym = elf->dynsymtab;
 
-		for (n = bucket[hash % nbuckets]; n; n = chain[n]) {
+		for (n = bucket[hash_val % nbuckets]; n; n = chain[n]) {
 			if (n >= nchains || n >= elf->num_dynsyms)
 				err(TEE_ERROR_BAD_FORMAT,
 				    "Index out of range");

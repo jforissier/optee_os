@@ -57,7 +57,7 @@ struct ta_elf {
 	size_t dynstr_size;
 
 	/* DT_HASH hash table for faster resolution of external symbols */
-	void *hashtab;
+	void *hash;
 
 	/* DT_SONAME */
 	char *soname;
