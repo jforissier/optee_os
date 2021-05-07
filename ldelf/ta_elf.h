@@ -56,8 +56,14 @@ struct ta_elf {
 	const char *dynstr;
 	size_t dynstr_size;
 
-	/* DT_HASH hash table for faster resolution of external symbols */
+	/*
+	 * DT_HASH and/or DT_GNU_HASH hash tables to lookup symbols by name.
+	 * GNU ld and Clang's ld.lld produce both by default, but this can be
+	 * controlled via --hash-style={sysv,gnu,both}. GNU_HASH has better
+	 * performance.
+	 */
 	void *hash;
+	void *gnuhash;
 
 	/* DT_SONAME */
 	char *soname;

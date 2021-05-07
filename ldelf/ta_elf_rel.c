@@ -32,6 +32,17 @@ static uint32_t elf_hash(const char *name)
 	return h;
 }
 
+static uint32_t gnu_hash(const char *name)
+{
+	const unsigned char *p = (const unsigned char *)name;
+	uint32_t h = 5381;
+
+	while (*p)
+		h = h * 33 + *p++;
+
+	return h;
+}
+
 static bool __resolve_sym(struct ta_elf *elf, unsigned int st_bind,
 			  unsigned int st_type, size_t st_shndx,
 			  size_t st_name, size_t st_value, const char *name,
