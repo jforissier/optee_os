@@ -51,6 +51,9 @@
 #if defined(CFG_CORE_CRYPTO_AES_ACCEL)
 #define MBEDTLS_AES_ALT
 #endif
+#if defined(CFG_CRYPTO_GCM) && defined(CFG_CRYPTO_AES_GCM_FROM_CRYPTOLIB)
+#define MBEDTLS_GCM_C
+#endif
 #endif
 
 #if defined(CFG_CRYPTO_DES)

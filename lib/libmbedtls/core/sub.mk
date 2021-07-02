@@ -9,6 +9,9 @@ srcs-y += aes.c
 srcs-$(CFG_CRYPTO_ECB) += aes_ecb.c
 srcs-$(CFG_CRYPTO_CBC) += aes_cbc.c
 srcs-$(CFG_CRYPTO_CTR) += aes_ctr.c
+ifeq ($(CFG_CRYPTO_AES_GCM_FROM_CRYPTOLIB),y)
+srcs-$(CFG_CRYPTO_GCM) += aes_gcm.c
+endif
 endif
 ifeq ($(CFG_CRYPTO_DES),y)
 srcs-$(CFG_CRYPTO_ECB) += des_ecb.c
