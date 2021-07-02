@@ -1,6 +1,6 @@
 jobs:
   - job: build_all
-    displayName: 'Build all'
+    displayName: 'Build'
     pool:
       vmImage: ubuntu-18.04
     container:
@@ -176,7 +176,7 @@ jobs:
           upload_cache
 
   - job: QEMUv8_check
-    displayName: 'Run regression tests (xtest) in QEMUv8'
+    displayName: 'Run test suite - QEMUv8'
     pool:
       vmImage: ubuntu-18.04
     container:
