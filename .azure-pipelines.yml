@@ -41,6 +41,7 @@ jobs:
           sudo -E bash -c "apt update -qq -y && apt install -qq -y pycodestyle"
           pycodestyle scripts/*.py core/arch/arm/plat-stm32mp1/scripts/stm32image.py
         displayName: 'Run pycodestyle'
+        condition: succeededOrFailed()  # Run this 'script' even if previous ones failed
   - job: build_all
     displayName: 'Build all'
     pool:
