@@ -9,6 +9,7 @@
 
 #include <arm.h>
 #include <assert.h>
+#include <bitstring.h>
 #include <config.h>
 #include <io.h>
 #include <keep.h>
@@ -153,6 +154,66 @@ const uint32_t stack_tmp_stride __section(".identity_map.stack_tmp_stride") =
  */
 DECLARE_KEEP_PAGER(stack_tmp_export);
 DECLARE_KEEP_PAGER(stack_tmp_stride);
+
+#ifdef CFG_SYSCALL_FTRACE
+
+#define NUM_STACKS (CFG_TEE_CORE_NB_CORE /* stack_tmp */ + \
+		    CFG_TEE_CORE_NB_CORE /* stack_abt */ + \
+		    CFG_NUM_THREADS /* stack_thread or pager stacks */)
+
+/* One boolean flag per stack */
+bitstr_t __nex_data bit_decl(mcount_flags, NUM_STACKS) = { };
+
+static int __noprof mcount_flags_idx(vaddr_t addr)
+{
+	vaddr_t stack_tmp_va = (vaddr_t)stack_tmp;
+	vaddr_t stack_abt_va = (vaddr_t)stack_abt;
+#ifdef CFG_WITH_PAGER
+	int n = 0;
+#else
+	vaddr_t stack_thr_va = (vaddr_t)stack_thread;
+#endif
+
+	if (addr >= stack_tmp_va && addr <= stack_tmp_va + sizeof(stack_tmp))
+		return (addr - stack_tmp_va) / sizeof(stack_tmp);
+	if (addr >= stack_abt_va && addr <= stack_abt_va + sizeof(stack_abt))
+		return CFG_TEE_CORE_NB_CORE +
+			(addr - stack_abt_va) / sizeof(stack_abt);
+#ifdef CFG_WITH_PAGER
+	/*
+	 * Should work for the non-pager case, too but better not introduce a
+	 * loop in a function that is called very often.
+	 */
+	for (n = 0; n < CFG_NUM_THREADS; n++) {
+		if (addr <= threads[n].stack_va_end &&
+		    addr >= threads[n].stack_va_end - STACK_THREAD_SIZE)
+			return 2 * CFG_TEE_CORE_NB_CORE + n;
+	}
+#else
+	if (addr >= stack_thr_va && addr <= stack_thr_va + sizeof(stack_thread))
+		return 2 * CFG_TEE_CORE_NB_CORE +
+			((addr - stack_thr_va) / sizeof(stack_thread));
+#endif
+	return -1;
+}
+
+long __noprof mcount_suspend(long val)
+{
+	int idx = mcount_flags_idx((vaddr_t)&idx);
+	long prev = 0;
+
+	assert(idx != -1);
+
+	prev = bit_test(mcount_flags, idx);
+
+	if (val)
+		bit_set(mcount_flags, idx);
+	else
+		bit_clear(mcount_flags, idx);
+
+	return prev;
+}
+#endif
 
 #ifdef CFG_CORE_UNMAP_CORE_AT_EL0
 static vaddr_t thread_user_kcode_va __nex_bss;
@@ -639,7 +700,7 @@ static bool is_from_user(uint32_t cpsr)
 #endif
 
 #ifdef CFG_SYSCALL_FTRACE
-static void __noprof ftrace_suspend(void)
+static void ftrace_suspend(void)
 {
 	struct ts_session *s = TAILQ_FIRST(&thread_get_tsd()->sess_stack);
 
@@ -647,7 +708,7 @@ static void __noprof ftrace_suspend(void)
 		s->fbuf->syscall_trace_suspended = true;
 }
 
-static void __noprof ftrace_resume(void)
+static void ftrace_resume(void)
 {
 	struct ts_session *s = TAILQ_FIRST(&thread_get_tsd()->sess_stack);
 
@@ -655,11 +716,11 @@ static void __noprof ftrace_resume(void)
 		s->fbuf->syscall_trace_suspended = false;
 }
 #else
-static void __noprof ftrace_suspend(void)
+static void ftrace_suspend(void)
 {
 }
 
-static void __noprof ftrace_resume(void)
+static void ftrace_resume(void)
 {
 }
 #endif

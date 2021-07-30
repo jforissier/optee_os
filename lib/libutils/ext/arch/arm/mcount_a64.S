@@ -48,10 +48,21 @@ FUNC _mcount, :
 	bl		__mcount_internal
 #endif
 #ifdef CFG_FTRACE_SUPPORT
+#if defined(__KERNEL__) && defined(CFG_SYSCALL_FTRACE)
+	/* Prevent recursion */
+	mov		x0, #1
+	bl		mcount_suspend
+	cbnz		x0, 1f
+#endif
 	get_pc		x0
 	get_lr_addr	x1
 	bl		ftrace_enter
+#if defined(__KERNEL__) && defined(CFG_SYSCALL_FTRACE)
+	mov		x0, #0
+	bl		mcount_suspend
 #endif
+#endif
+1:
 	ldp		x29, x30, [sp], #16
 	ret
 END_FUNC _mcount
@@ -65,10 +76,27 @@ FUNC __ftrace_return, :
 	stp		x4, x5, [sp, #32]
 	stp		x6, x7, [sp, #48]
 
+#if defined(__KERNEL__) && defined(CFG_SYSCALL_FTRACE)
+	/*
+	 * Prevent subsequent entering of _mcount() up the call stack because
+	 * we don't want to do the ftrace_enter() stuff. Without this we would
+	 * have to tag all functions in the ftrace_return() call graph with
+	 * __noprof which would be error-prone and fragile.
+	 */
+	mov		x0, #1
+	bl		mcount_suspend
+	cbnz		x0, 1f
+#endif
 	/* Get return address of parent func */
 	bl		ftrace_return
+#if defined(__KERNEL__) && defined(CFG_SYSCALL_FTRACE)
+	stp		x0, xzr, [sp, #-16]!
+	mov		x0, #0
+	bl		mcount_suspend
+	ldp		x0, xzr, [sp], #16
+#endif
 	mov		x30, x0
-
+1:
 	/* Restore return value regs */
 	ldp		x0, x1, [sp]
 	ldp		x2, x3, [sp, #16]

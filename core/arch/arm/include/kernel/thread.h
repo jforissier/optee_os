@@ -573,6 +573,13 @@ static inline void thread_get_user_kdata(struct mobj **mobj, size_t *offset,
 #endif
 
 /*
+ * Called from assembly to prevent further entering into _mcount() /
+ * _gnu_mcount_nc() when profiling is enabled (-pg). Call with val == 1 to
+ * suspend mcount, 0 to resume.
+ */
+long mcount_suspend(long val);
+
+/*
  * Returns the start address (bottom) of the stack for the current thread,
  * zero if there is no current thread.
  */
