@@ -231,20 +231,22 @@ jobs:
       - script: |
           set -e -v
           export LC_ALL=C
+          export CFG_TEE_CORE_LOG_LEVEL=0
           # Azure CI sets ${SYSTEM} to "build" which prevents OpenSSL from building due to:
           # https://github.com/openssl/openssl/blob/OpenSSL_1_1_1l/config#L56
           unset SYSTEM
+          function _make() { sudo -E make -C /root/optee_repo_qemu_v8/build -j$(getconf _NPROCESSORS_ONLN) $*; }
           WD=$(pwd)
           sudo -E bash -c "cd /root/optee_repo_qemu_v8/.repo/repo && git pull"
           sudo -E bash -c "cd /root/optee_repo_qemu_v8 && repo sync -j 10"
           sudo mv /root/optee_repo_qemu_v8/optee_os /root/optee_repo_qemu_v8/optee_os_old
           sudo ln -s ${WD} /root/optee_repo_qemu_v8/optee_os
 
-          sudo -E make -C /root/optee_repo_qemu_v8/build -j$(getconf _NPROCESSORS_ONLN) CFG_TEE_CORE_LOG_LEVEL=0 check
+          _make check
 
           sudo -E rm -rf /root/optee_repo_qemu_v8/out-br/build/optee_test*
-          sudo -E make -C /root/optee_repo_qemu_v8/build arm-tf-clean
-          sudo -E make -C /root/optee_repo_qemu_v8/build -j$(getconf _NPROCESSORS_ONLN) CFG_TEE_CORE_LOG_LEVEL=0 check XEN_BOOT=y
+          _make arm-tf-clean
+          _make check XEN_BOOT=y
 
   - job: QEMUv8_build_Rust
     displayName: 'Run regression tests (Rust) in QEMUv8'
