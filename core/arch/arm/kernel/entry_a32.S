@@ -271,13 +271,15 @@ DECLARE_KEEP_INIT _start
 
 	/*
 	 * Setup sp to point to the top of the tmp stack for the current CPU:
-	 * sp is assigned stack_tmp_export + cpu_id * stack_tmp_stride
+	 * sp is assigned thread_get_stack_tmp_export() +
+	 *                           cpu_id * stack_tmp_stride
 	 */
 	.macro set_sp
 		bl	__get_core_pos
 		cmp	r0, #CFG_TEE_CORE_NB_CORE
 		/* Unsupported CPU, park it before it breaks something */
 		bge	unhandled_cpu
+		mov	r2, r0
 
 		/*
 		 * stack_tmp_stride and stack_tmp_stride_rel are the
@@ -294,18 +296,15 @@ DECLARE_KEEP_INIT _start
 		ldr	r1, [r3]
 		ldr	r1, [r1, r3]
 
-		/* Same pattern as for stack_tmp_stride above */
-		adr	r3, stack_tmp_export_rel
-		ldr	r2, [r3]
-		ldr	r2, [r2, r3]
+		bl	thread_get_stack_tmp_export
 
 		/*
-		 * r0 is core pos
+		 * r2 is core pos
 		 * r1 is value of stack_tmp_stride
-		 * r2 is value of stack_tmp_export
+		 * r0 is value returned by thread_get_stack_tmp_export()
 		 */
-		mul	r1, r0, r1
-		add	sp, r1, r2
+		mul	r1, r2, r1
+		add	sp, r1, r0
 	.endm
 
 	/*
@@ -823,10 +822,6 @@ LOCAL_FUNC enable_mmu , : , .identity_map
 	bx	lr
 END_FUNC enable_mmu
 
-LOCAL_DATA stack_tmp_export_rel , :
-	.word	stack_tmp_export - stack_tmp_export_rel
-END_DATA stack_tmp_export_rel
-
 LOCAL_DATA stack_tmp_stride_rel , :
 	.word	stack_tmp_stride - stack_tmp_stride_rel
 END_DATA stack_tmp_stride_rel
@@ -878,7 +873,8 @@ UNWIND(	.cantunwind)
 	set_sp
 #ifdef CFG_CORE_ASLR
 	/*
-	 * stack_tmp_export which is used as base when initializing sp has
+	 * The value returned by thread_get_stack_tmp_export() which is used as
+	 * base when initializing sp has
 	 * been relocated to the new offset. Since MMU isn't enabled on
 	 * this CPU yet we need to restore the corresponding physical
 	 * address.

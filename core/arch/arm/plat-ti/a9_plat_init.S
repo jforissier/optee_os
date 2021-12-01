@@ -81,8 +81,7 @@ unhandled_cpu:
 	ldr	r1, =stack_tmp_stride
 	ldr	r1, [r1]
 	mul	r1, r0, r1
-	ldr	r0, =stack_tmp_export
-	ldr	r0, [r0]
+	bl	thread_get_stack_tmp_export
 	add	sp, r1, r0
 
 	/* Push our return on the stack as sm_pm_cpu_do_resume expects */

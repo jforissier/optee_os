@@ -142,16 +142,19 @@ DECLARE_STACK(stack_thread, CFG_NUM_THREADS,
 #define GET_STACK_BOTTOM(stack, n) ((vaddr_t)&(stack)[n] + sizeof(stack[n]) - \
 				    STACK_CANARY_SIZE / 2)
 
-const void *stack_tmp_export __section(".identity_map.stack_tmp_export") =
-	(void *)(GET_STACK_BOTTOM(stack_tmp, 0) - STACK_TMP_OFFS);
 const uint32_t stack_tmp_stride __section(".identity_map.stack_tmp_stride") =
 	sizeof(stack_tmp[0]);
+void *__section(".identity_map.thread_get_stack_tmp_export")
+thread_get_stack_tmp_export(void)
+{
+	return (void *)(GET_STACK_BOTTOM(stack_tmp, 0) - STACK_TMP_OFFS);
+}
 
 /*
  * These stack setup info are required by secondary boot cores before they
  * each locally enable the pager (the mmu). Hence kept in pager sections.
  */
-DECLARE_KEEP_PAGER(stack_tmp_export);
+DECLARE_KEEP_PAGER(thread_get_stack_tmp_export);
 DECLARE_KEEP_PAGER(stack_tmp_stride);
 
 #ifdef CFG_CORE_UNMAP_CORE_AT_EL0

@@ -97,7 +97,6 @@ struct thread_ctx {
 #define THREAD_CLF_FIQ				(1 << THREAD_CLF_FIQ_SHIFT)
 
 #ifndef __ASSEMBLER__
-extern const void *stack_tmp_export;
 extern const uint32_t stack_tmp_stride;
 extern struct thread_ctx threads[];
 
@@ -187,6 +186,8 @@ uint32_t thread_get_usr_sp(void);
 
 /* Checks stack canaries */
 void thread_check_canaries(void);
+
+void *thread_get_stack_tmp_export(void);
 
 void thread_alloc_and_run(uint32_t a0, uint32_t a1, uint32_t a2, uint32_t a3,
 			  uint32_t a4, uint32_t a5);
