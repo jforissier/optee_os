@@ -82,5 +82,8 @@ SECTIONS {
 	.data : { *(.data .data.* .gnu.linkonce.d.*) }
 	.bss : { *(.bss .bss.* .gnu.linkonce.b.* COMMON) }
 
-	/DISCARD/ : { *(.interp) }
+	/DISCARD/ : {
+		*(.interp)
+		*(.note.gnu.property)
+	}
 }

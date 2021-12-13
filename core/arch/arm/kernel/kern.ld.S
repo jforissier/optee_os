@@ -429,6 +429,7 @@ SECTIONS
 		*(.comment .note .eh_frame .interp)
 		/* Strip meta variables */
 		*(__keep_meta_vars*)
+		*(.note.gnu.property)
 	}
 
 }
