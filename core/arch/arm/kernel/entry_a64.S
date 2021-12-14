@@ -292,6 +292,7 @@ clear_nex_bss:
 END_FUNC _start
 DECLARE_KEEP_INIT _start
 
+	.section .identity_map.data
 	.balign	8
 LOCAL_DATA cached_mem_end , :
 	.skip	8
@@ -422,6 +423,7 @@ LOCAL_FUNC enable_mmu , : , .identity_map
 	ret
 END_FUNC enable_mmu
 
+	.section .identity_map.data
 	.balign	8
 DATA boot_mmu_config , : /* struct core_mmu_config */
 	.skip	CORE_MMU_CONFIG_SIZE
