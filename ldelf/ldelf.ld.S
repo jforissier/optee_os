@@ -27,6 +27,7 @@ SECTIONS {
 		*(.vfp11_veneer)
 		__text_end = .;
 	}
+	.note.gnu.property : { *(.note.gnu.property) }
         .plt : { *(.plt) }
 
 	.eh_frame : { *(.eh_frame) }
@@ -82,8 +83,5 @@ SECTIONS {
 	.data : { *(.data .data.* .gnu.linkonce.d.*) }
 	.bss : { *(.bss .bss.* .gnu.linkonce.b.* COMMON) }
 
-	/DISCARD/ : {
-		*(.interp)
-		*(.note.gnu.property)
-	}
+	/DISCARD/ : { *(.interp) }
 }
