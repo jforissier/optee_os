@@ -139,8 +139,6 @@ SECTIONS
 		__rodata_dtdrv_end = .;
 #endif
 		*(.rodata .rodata.*)
-		. = ALIGN(8);
-		KEEP(*(SORT(.scattered_array*)));
 #endif
 		. = ALIGN(8);
 		__rodata_end = .;
@@ -234,6 +232,7 @@ SECTIONS
 		__data_start = .;
 		*(.data .data.* .gnu.linkonce.d.*)
 		. = ALIGN(8);
+		KEEP(*(SORT(.scattered_array*)));
 	}
 
 	/* unintialized data */
@@ -328,9 +327,6 @@ SECTIONS
 
 	.rodata_init : {
 #include <rodata_init.ld.S>
-
-		. = ALIGN(8);
-		KEEP(*(SORT(.scattered_array*)));
 
 		. = ALIGN(8);
 		__rodata_init_end = .;
