@@ -100,7 +100,8 @@ struct dt_driver {
 	TEE_Result (*probe)(const void *fdt, int node, const void *compat_data);
 };
 
-#define __dt_driver __section(".rodata.dtdrv" __SECTION_FLAGS_RODATA)
+/* TODO: check if __SECTION_FLAGS_RODATA is needed */
+#define __dt_driver __section(".data.dtdrv" __SECTION_FLAGS_RODATA)
 
 /*
  * Find a driver that is suitable for the given DT node, that is, with

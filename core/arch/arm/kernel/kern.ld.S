@@ -133,11 +133,6 @@ SECTIONS
 		*(.rodata .rodata.__unpaged .rodata.__unpaged.*)
 #include <rodata_unpaged.ld.S>
 #else
-#ifdef CFG_DT
-		__rodata_dtdrv_start = .;
-		KEEP(*(.rodata.dtdrv))
-		__rodata_dtdrv_end = .;
-#endif
 		*(.rodata .rodata.*)
 #endif
 		. = ALIGN(8);
@@ -233,6 +228,12 @@ SECTIONS
 		*(.data .data.* .gnu.linkonce.d.*)
 		. = ALIGN(8);
 		KEEP(*(SORT(.scattered_array*)));
+#ifdef CFG_DT
+		. = ALIGN(8);
+		__data_dtdrv_start = .;
+		KEEP(*(.data.dtdrv))
+		__data_dtdrv_end = .;
+#endif
 	}
 
 	/* unintialized data */
@@ -340,11 +341,6 @@ SECTIONS
 	__flatmap_init_ro_size = __init_end - __flatmap_init_ro_start;
 
 	.rodata_pageable : ALIGN(8) {
-#ifdef CFG_DT
-		__rodata_dtdrv_start = .;
-		KEEP(*(.rodata.dtdrv))
-		__rodata_dtdrv_end = .;
-#endif
 		*(.rodata*)
 	}
 
