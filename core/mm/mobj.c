@@ -120,7 +120,7 @@ static void mobj_phys_free(struct mobj *mobj)
  * Note: this variable is weak just to ease breaking its dependency chain
  * when added to the unpaged area.
  */
-const struct mobj_ops mobj_phys_ops __weak __rodata_unpaged("mobj_phys_ops") = {
+const struct mobj_ops mobj_phys_ops __weak = {
 	.get_va = mobj_phys_get_va,
 	.get_pa = mobj_phys_get_pa,
 	.get_phys_offs = NULL, /* only offset 0 */
@@ -128,6 +128,7 @@ const struct mobj_ops mobj_phys_ops __weak __rodata_unpaged("mobj_phys_ops") = {
 	.matches = mobj_phys_matches,
 	.free = mobj_phys_free,
 };
+DECLARE_KEEP_PAGER(mobj_phys_ops);
 
 static struct mobj_phys *to_mobj_phys(struct mobj *mobj)
 {
@@ -222,9 +223,10 @@ static void *mobj_virt_get_va(struct mobj *mobj, size_t offset)
  * Note: this variable is weak just to ease breaking its dependency chain
  * when added to the unpaged area.
  */
-const struct mobj_ops mobj_virt_ops __weak __rodata_unpaged("mobj_virt_ops") = {
+const struct mobj_ops mobj_virt_ops __weak = {
 	.get_va = mobj_virt_get_va,
 };
+DECLARE_KEEP_PAGER(mobj_virt_ops);
 
 static void mobj_virt_assert_type(struct mobj *mobj __maybe_unused)
 {
@@ -294,7 +296,7 @@ static void mobj_mm_free(struct mobj *mobj)
  * Note: this variable is weak just to ease breaking its dependency chain
  * when added to the unpaged area.
  */
-const struct mobj_ops mobj_mm_ops __weak __rodata_unpaged("mobj_mm_ops") = {
+const struct mobj_ops mobj_mm_ops __weak = {
 	.get_va = mobj_mm_get_va,
 	.get_pa = mobj_mm_get_pa,
 	.get_phys_offs = mobj_mm_get_phys_offs,
@@ -302,6 +304,7 @@ const struct mobj_ops mobj_mm_ops __weak __rodata_unpaged("mobj_mm_ops") = {
 	.matches = mobj_mm_matches,
 	.free = mobj_mm_free,
 };
+DECLARE_KEEP_PAGER(mobj_mm_ops);
 
 static struct mobj_mm *to_mobj_mm(struct mobj *mobj)
 {
@@ -409,7 +412,7 @@ static uint64_t mobj_shm_get_cookie(struct mobj *mobj)
  * Note: this variable is weak just to ease breaking its dependency chain
  * when added to the unpaged area.
  */
-const struct mobj_ops mobj_shm_ops __weak __rodata_unpaged("mobj_shm_ops") = {
+const struct mobj_ops mobj_shm_ops __weak = {
 	.get_va = mobj_shm_get_va,
 	.get_pa = mobj_shm_get_pa,
 	.get_phys_offs = mobj_shm_get_phys_offs,
@@ -417,6 +420,7 @@ const struct mobj_ops mobj_shm_ops __weak __rodata_unpaged("mobj_shm_ops") = {
 	.free = mobj_shm_free,
 	.get_cookie = mobj_shm_get_cookie,
 };
+DECLARE_KEEP_PAGER(mobj_shm_ops);
 
 static struct mobj_shm *to_mobj_shm(struct mobj *mobj)
 {
@@ -503,13 +507,13 @@ static struct fobj *mobj_seccpy_shm_get_fobj(struct mobj *mobj)
  * Note: this variable is weak just to ease breaking its dependency chain
  * when added to the unpaged area.
  */
-const struct mobj_ops mobj_seccpy_shm_ops
-__weak __rodata_unpaged("mobj_seccpy_shm_ops") = {
+const struct mobj_ops mobj_seccpy_shm_ops __weak = {
 	.get_va = mobj_seccpy_shm_get_va,
 	.matches = mobj_seccpy_shm_matches,
 	.free = mobj_seccpy_shm_free,
 	.get_fobj = mobj_seccpy_shm_get_fobj,
 };
+DECLARE_KEEP_PAGER(mobj_seccpy_shm_ops);
 
 static bool mobj_is_seccpy_shm(struct mobj *mobj)
 {
@@ -665,14 +669,14 @@ DECLARE_KEEP_PAGER(mobj_with_fobj_get_pa);
  * Note: this variable is weak just to ease breaking its dependency chain
  * when added to the unpaged area.
  */
-const struct mobj_ops mobj_with_fobj_ops
-__weak __rodata_unpaged("mobj_with_fobj_ops") = {
+const struct mobj_ops mobj_with_fobj_ops __weak = {
 	.matches = mobj_with_fobj_matches,
 	.free = mobj_with_fobj_free,
 	.get_fobj = mobj_with_fobj_get_fobj,
 	.get_cattr = mobj_with_fobj_get_cattr,
 	.get_pa = mobj_with_fobj_get_pa,
 };
+DECLARE_KEEP_PAGER(mobj_with_fobj_ops);
 
 #ifdef CFG_PAGED_USER_TA
 bool mobj_is_paged(struct mobj *mobj)

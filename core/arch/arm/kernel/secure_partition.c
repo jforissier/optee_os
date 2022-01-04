@@ -5,6 +5,7 @@
 #include <bench.h>
 #include <crypto/crypto.h>
 #include <initcall.h>
+#include <keep.h>
 #include <kernel/embedded_ts.h>
 #include <kernel/ldelf_loader.h>
 #include <kernel/secure_partition.h>
@@ -394,10 +395,11 @@ static bool sp_handle_svc(struct thread_svc_regs *regs)
  * Note: this variable is weak just to ease breaking its dependency chain
  * when added to the unpaged area.
  */
-const struct ts_ops sp_ops __weak __rodata_unpaged("sp_ops") = {
+const struct ts_ops sp_ops __weak = {
 	.enter_invoke_cmd = sp_enter_invoke_cmd,
 	.handle_svc = sp_handle_svc,
 };
+DECLARE_KEEP_PAGER(sp_ops);
 
 static TEE_Result sp_init_all(void)
 {

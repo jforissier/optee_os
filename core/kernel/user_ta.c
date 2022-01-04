@@ -374,7 +374,7 @@ static uint32_t user_ta_get_instance_id(struct ts_ctx *ctx)
  * Note: this variable is weak just to ease breaking its dependency chain
  * when added to the unpaged area.
  */
-const struct ts_ops user_ta_ops __weak __rodata_unpaged("user_ta_ops") = {
+const struct ts_ops user_ta_ops __weak = {
 	.enter_open_session = user_ta_enter_open_session,
 	.enter_invoke_cmd = user_ta_enter_invoke_cmd,
 	.enter_close_session = user_ta_enter_close_session,
@@ -389,6 +389,7 @@ const struct ts_ops user_ta_ops __weak __rodata_unpaged("user_ta_ops") = {
 	.gprof_set_status = user_ta_gprof_set_status,
 #endif
 };
+DECLARE_KEEP_PAGER(user_ta_ops);
 
 static void set_ta_ctx_ops(struct tee_ta_ctx *ctx)
 {

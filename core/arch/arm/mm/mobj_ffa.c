@@ -597,7 +597,7 @@ static TEE_Result mapped_shm_init(void)
  * Note: this variable is weak just to ease breaking its dependency chain
  * when added to the unpaged area.
  */
-const struct mobj_ops mobj_ffa_ops __weak __rodata_unpaged("mobj_ffa_ops") = {
+const struct mobj_ops mobj_ffa_ops __weak = {
 	.get_pa = ffa_get_pa,
 	.get_phys_offs = ffa_get_phys_offs,
 	.get_va = ffa_get_va,
@@ -608,5 +608,6 @@ const struct mobj_ops mobj_ffa_ops __weak __rodata_unpaged("mobj_ffa_ops") = {
 	.inc_map = ffa_inc_map,
 	.dec_map = ffa_dec_map,
 };
+DECLARE_KEEP_PAGER(mobj_ffa_ops);
 
 preinit(mapped_shm_init);
