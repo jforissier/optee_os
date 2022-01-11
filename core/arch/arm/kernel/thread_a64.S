@@ -188,7 +188,9 @@ END_FUNC thread_unwind_user_mode
 		isb
 
 		/* Jump into the full mapping and continue execution */
-		ldr	x0, =1f
+		adr	x0, 1f
+		ldr	x1, [sp, #THREAD_CORE_LOCAL_KCODE_OFFSET]
+		add	x0, x0, x1
 		br	x0
 	1:
 BTI(		bti	j)
