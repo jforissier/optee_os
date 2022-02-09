@@ -1,0 +1,19 @@
+version: 2.1
+
+jobs:
+  build-medium:
+    machine:
+      image: ubuntu-2004:202101-01
+    resource_class: arm.medium
+    steps:
+      - run:
+          name: Build
+          command: |
+            uname -a
+            echo "Hello, Arm!"
+            gcc --version
+
+workflows:
+  build:
+    jobs:
+      - build-medium
