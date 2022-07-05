@@ -139,6 +139,7 @@ TEE_Result crypto_acipher_alloc_rsa_keypair(struct rsa_keypair *s,
 	s->n = crypto_bignum_allocate(key_size_bits);
 	if (!s->n)
 		goto err;
+#ifndef MBEDTLS_RSA_NO_CRT
 	s->p = crypto_bignum_allocate(key_size_bits);
 	if (!s->p)
 		goto err;
@@ -154,6 +155,7 @@ TEE_Result crypto_acipher_alloc_rsa_keypair(struct rsa_keypair *s,
 	s->dq = crypto_bignum_allocate(key_size_bits);
 	if (!s->dq)
 		goto err;
+#endif
 
 	return TEE_SUCCESS;
 err:
@@ -192,11 +194,13 @@ void crypto_acipher_free_rsa_keypair(struct rsa_keypair *s)
 	crypto_bignum_free(s->e);
 	crypto_bignum_free(s->d);
 	crypto_bignum_free(s->n);
+#ifndef MBEDTLS_RSA_NO_CRT
 	crypto_bignum_free(s->p);
 	crypto_bignum_free(s->q);
 	crypto_bignum_free(s->qp);
 	crypto_bignum_free(s->dp);
 	crypto_bignum_free(s->dq);
+#endif
 }
 
 TEE_Result crypto_acipher_gen_rsa_key(struct rsa_keypair *key, size_t key_size)
@@ -224,12 +228,13 @@ TEE_Result crypto_acipher_gen_rsa_key(struct rsa_keypair *key, size_t key_size)
 		crypto_bignum_copy(key->e, (void *)&rsa.E);
 		crypto_bignum_copy(key->d, (void *)&rsa.D);
 		crypto_bignum_copy(key->n, (void *)&rsa.N);
+#ifndef MBEDTLS_RSA_NO_CRT
 		crypto_bignum_copy(key->p, (void *)&rsa.P);
-
 		crypto_bignum_copy(key->q, (void *)&rsa.Q);
 		crypto_bignum_copy(key->qp, (void *)&rsa.QP);
 		crypto_bignum_copy(key->dp, (void *)&rsa.DP);
 		crypto_bignum_copy(key->dq, (void *)&rsa.DQ);
+#endif
 
 		res = TEE_SUCCESS;
 	}
