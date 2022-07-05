@@ -1981,6 +1981,22 @@ static TEE_Result tee_svc_obj_generate_key_rsa(
 
 	/* Set bits for all known attributes for this object type */
 	o->have_attrs = (1 << type_props->num_type_attrs) - 1;
+	if (!crypto_bignum_num_bits(key->p)) {
+		/*
+		 * key->p is zero.
+		 * Some crypto implementations (such as MBedTLS with
+		 * MBEDTLS_NO_CRT enabled) may not generate the CRT parameters.
+		 * In this case, clear the corresponding attribute bits.
+		 */
+		uint32_t crtidx = 0;
+
+		crtidx = get_attribute(o, type_props, TEE_ATTR_RSA_PRIME1) |
+			 get_attribute(o, type_props, TEE_ATTR_RSA_PRIME2) |
+			 get_attribute(o, type_props, TEE_ATTR_RSA_EXPONENT1) |
+			 get_attribute(o, type_props, TEE_ATTR_RSA_EXPONENT2) |
+			 get_attribute(o, type_props, TEE_ATTR_RSA_COEFFICIENT);
+		o->have_attrs &= ~crtidx;
+	}
 
 	return TEE_SUCCESS;
 }
