@@ -773,6 +773,9 @@ void crypto_bignum_clear(struct bignum *s)
 {
 	mbedtls_mpi *bn = (mbedtls_mpi *)s;
 
+	if (!bn)
+		return;
+
 	bn->s = 1;
 	if (bn->p)
 		memset(bn->p, 0, sizeof(*bn->p) * bn->n);
