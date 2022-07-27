@@ -1,4 +1,3 @@
-#
 # Cancel previous CI workflows that are still running when a new one is
 # requested with the same ID. Happens when a branch is pushed to,
 # including when a PR is updated. It would be wasteful to leave CI
