@@ -247,7 +247,7 @@ jobs:
   QEMUv8_check:
     name: make check (QEMUv8)
     runs-on: ubuntu-latest
-    container: jforissier/optee_os_ci:qemuv8_check
+    container: jforissier/optee_os_ci:tmp
     steps:
       - name: Restore build cache
         uses: actions/cache@v3
@@ -277,7 +277,7 @@ jobs:
   QEMUv8_Xen_check:
     name: make check (QEMUv8, Xen)
     runs-on: ubuntu-latest
-    container: jforissier/optee_os_ci:qemuv8_check
+    container: jforissier/optee_os_ci:tmp
     steps:
       - name: Restore build cache
         uses: actions/cache@v3
@@ -306,7 +306,7 @@ jobs:
   QEMUv8_check_BTI_MTE_PAC:
     name: make check (QEMUv8, BTI+MTE+PAC)
     runs-on: ubuntu-latest
-    container: jforissier/optee_os_ci:qemuv8_check
+    container: jforissier/optee_os_ci:tmp
     steps:
       - name: Restore build cache
         uses: actions/cache@v3
@@ -344,7 +344,7 @@ jobs:
   QEMUv8_check_rust:
     name: make check-rust (QEMUv8)
     runs-on: ubuntu-latest
-    container: jforissier/optee_os_ci:qemuv8_check
+    container: jforissier/optee_os_ci:tmp
     steps:
       - name: Restore build cache
         uses: actions/cache@v3
