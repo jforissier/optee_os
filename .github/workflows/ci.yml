@@ -247,7 +247,7 @@ jobs:
   QEMUv8_check:
     name: make check (QEMUv8)
     runs-on: ubuntu-latest
-    container: jforissier/optee_os_ci:qemuv8_check
+    container: jforissier/optee_os_ci:qc_plus_bti
     steps:
       - name: Restore build cache
         uses: actions/cache@v3
@@ -282,7 +282,7 @@ jobs:
   QEMUv8_check_rust:
     name: make check-rust (QEMUv8)
     runs-on: ubuntu-latest
-    container: jforissier/optee_os_ci:qemuv8_check
+    container: jforissier/optee_os_ci:qc_plus_bti
     steps:
       - name: Checkout
         uses: actions/checkout@v3
