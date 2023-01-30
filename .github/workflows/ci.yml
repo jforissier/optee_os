@@ -269,6 +269,7 @@ jobs:
           sudo -E bash -c "cd /root/optee_repo_qemu_v8 && repo sync -j 10"
           sudo mv /root/optee_repo_qemu_v8/optee_os /root/optee_repo_qemu_v8/optee_os_old
           sudo ln -s ${WD} /root/optee_repo_qemu_v8/optee_os
+          sudo -E bash -c 'sed -i -e "s/xen-4.14.3/xen-4.14.5/" /root/optee_repo_qemu_v8/build/qemu_v8.mk'
 
           sudo -E make -C /root/optee_repo_qemu_v8/build -j$(nproc) check
 
