@@ -272,6 +272,9 @@ jobs:
           mv ${TOP}/optee_os ${TOP}/optee_os_old
           ln -s ${WD} ${TOP}/optee_os
           cd ${TOP}/build
+          git remote add jf https://github.com/jforissier/optee_repo_build_files
+          git fetch jf
+          git checkout edk2-build-faster
 
           make -j$(nproc) check
 
@@ -305,6 +308,9 @@ jobs:
           mv ${TOP}/optee_os ${TOP}/optee_os_old
           ln -s ${WD} ${TOP}/optee_os
           cd ${TOP}/build
+          git remote add jf https://github.com/jforissier/optee_repo_build_files
+          git fetch jf
+          git checkout edk2-build-faster
 
           make -j$(nproc) check XEN_BOOT=y
 
@@ -345,6 +351,9 @@ jobs:
           mv ${TOP}/optee_os ${TOP}/optee_os_old
           ln -s ${WD} ${TOP}/optee_os
           cd ${TOP}/build
+          git remote add jf https://github.com/jforissier/optee_repo_build_files
+          git fetch jf
+          git checkout edk2-build-faster
 
           # xtest 1031 is excluded because 1031.4 (C++ exception from shared library) fails with this cross-compiler
           make -j$(nproc) CFG_CORE_BTI=y CFG_TA_BTI=y MEMTAG=y PAUTH=y XTEST_ARGS="-x 1031" check
