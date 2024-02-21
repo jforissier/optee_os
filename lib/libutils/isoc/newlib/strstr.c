@@ -66,7 +66,7 @@ QUICKREF
 	strstr ansi pure
 */
 
-#include "_ansi.h"
+#include <_ansi.h>
 #include <string.h>
 
 #if !defined(PREFER_SIZE_OVER_SPEED) && !defined(__OPTIMIZE_SIZE__)

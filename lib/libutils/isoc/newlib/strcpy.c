@@ -64,7 +64,7 @@ QUICKREF
 	strcpy ansi pure
 */
 
-#include "_ansi.h"
+#include <_ansi.h>
 #include <string.h>
 #include <limits.h>
 

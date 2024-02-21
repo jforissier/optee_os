@@ -143,7 +143,7 @@ PORTABILITY
  * SUCH DAMAGE.
  */
 
-#include "_ansi.h"
+#include <_ansi.h>
 #include <limits.h>
 #include <ctype.h>
 #include <stdlib.h>
