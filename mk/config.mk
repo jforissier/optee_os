@@ -1163,3 +1163,15 @@ $(eval $(call cfg-depends-all,CFG_WIDEVINE_PTA,CFG_DT CFG_WIDEVINE_HUK))
 # system (also called the target) to communicate with and use the I/O of the
 # host computer.
 CFG_SEMIHOSTING ?= n
+
+# Enable the semihosting console driver which inputs/outputs the characters
+# from/to the file or debug terminal on the semihosting host computer.
+#   - Specify CFG_SEMIHOSTING_CONSOLE_FILE="{your_log_file}" to output the
+#     characters to that file. Output to "optee.log" by default.
+#   - Specify CFG_SEMIHOSTING_CONSOLE_FILE=NULL to output the characters to the
+#     semihosting host terminal.
+CFG_SEMIHOSTING_CONSOLE ?= n
+ifeq ($(CFG_SEMIHOSTING_CONSOLE),y)
+$(call force,CFG_SEMIHOSTING,y)
+endif
+CFG_SEMIHOSTING_CONSOLE_FILE ?= "optee.log"
