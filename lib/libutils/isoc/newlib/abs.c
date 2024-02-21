@@ -66,7 +66,7 @@ PORTABILITY
 No supporting OS subroutines are required.
 */
 
-#include "_ansi.h"
+#include <_ansi.h>
 #include <stdlib.h>
 
 int
