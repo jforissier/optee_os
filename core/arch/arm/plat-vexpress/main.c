@@ -10,6 +10,7 @@
 #include <drivers/gic.h>
 #include <drivers/hfic.h>
 #include <drivers/pl011.h>
+#include <drivers/semihosting_console.h>
 #include <drivers/tzc400.h>
 #include <initcall.h>
 #include <keep.h>
@@ -27,6 +28,7 @@
 #include <trace.h>
 
 static struct pl011_data console_data __nex_bss;
+static struct semihosting_console_data sh_console_data __nex_bss;
 
 register_phys_mem_pgdir(MEM_AREA_IO_SEC, CONSOLE_UART_BASE, PL011_REG_SIZE);
 #if defined(PLATFORM_FLAVOR_fvp)
@@ -82,15 +84,22 @@ void boot_primary_init_intc(void)
 
 void console_init(void)
 {
-	pl011_init(&console_data, CONSOLE_UART_BASE, CONSOLE_UART_CLK_IN_HZ,
-		   CONSOLE_BAUDRATE);
-	register_serial_console(&console_data.chip);
+	if (IS_ENABLED(CFG_SEMIHOSTING_CONSOLE)) {
+		semihosting_console_init(&sh_console_data,
+					 "optee_semihosting_console.log");
+		register_serial_console(&sh_console_data.chip);
+	} else {
+		pl011_init(&console_data, CONSOLE_UART_BASE,
+			   CONSOLE_UART_CLK_IN_HZ, CONSOLE_BAUDRATE);
+		register_serial_console(&console_data.chip);
+	}
 }
 
 #if (defined(CFG_GIC) || defined(CFG_CORE_HAFNIUM_INTC)) && \
 	defined(IT_CONSOLE_UART) && \
 	!defined(CFG_NS_VIRTUALIZATION) && \
-	!(defined(CFG_WITH_ARM_TRUSTED_FW) && defined(CFG_ARM_GICV2))
+	!(defined(CFG_WITH_ARM_TRUSTED_FW) && defined(CFG_ARM_GICV2)) && \
+	!defined(CFG_SEMIHOSTING_CONSOLE)
 /*
  * This cannot be enabled with TF-A and GICv3 because TF-A then need to
  * assign the interrupt number of the UART to OP-TEE (S-EL1). Currently
