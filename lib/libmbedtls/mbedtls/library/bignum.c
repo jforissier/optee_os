@@ -1720,9 +1720,6 @@ void mbedtls_mpi_montred(mbedtls_mpi *A, const mbedtls_mpi *N,
     mbedtls_mpi_montmul(A, &U, N, mm, T);
 }
 
-/*
- * Sliding-window exponentiation: X = A^E mod N  (HAC 14.85)
- */
 int mbedtls_mpi_exp_mod(mbedtls_mpi *X, const mbedtls_mpi *A,
                         const mbedtls_mpi *E, const mbedtls_mpi *N,
                         mbedtls_mpi *prec_RR)
