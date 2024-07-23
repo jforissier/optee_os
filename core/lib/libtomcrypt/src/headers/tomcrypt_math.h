@@ -361,6 +361,11 @@ typedef struct {
    */
    int (*exptmod)(void *a, void *b, void *c, void *d);
 
+   /** Same as exptmod, but with a faster, less secure algorithm.
+       To be used on public data only.
+   */
+   int (*exptmod_unsafe)(void *a, void *b, void *c, void *d);
+
    /** Primality testing
        @param a     The integer to test
        @param b     The number of Miller-Rabin tests that shall be executed

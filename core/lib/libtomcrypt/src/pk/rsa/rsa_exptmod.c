@@ -136,7 +136,7 @@ int rsa_exptmod(const unsigned char *in,   unsigned long inlen,
       #endif
    } else {
       /* exptmod it */
-      if ((err = mp_exptmod(tmp, key->e, key->N, tmp)) != CRYPT_OK)                                { goto error; }
+      if ((err = mp_exptmod_unsafe(tmp, key->e, key->N, tmp)) != CRYPT_OK)                                { goto error; }
    }
 
    /* read it back */

@@ -244,6 +244,7 @@ void ocb3_int_xor_blocks(unsigned char *out, const unsigned char *block_a, const
 #define mp_montgomery_free(a)        ltc_mp.montgomery_deinit(a)
 
 #define mp_exptmod(a,b,c,d)          ltc_mp.exptmod(a,b,c,d)
+#define mp_exptmod_unsafe(a,b,c,d)   ltc_mp.exptmod_unsafe(a,b,c,d)
 #define mp_prime_is_prime(a, b, c)   ltc_mp.isprime(a, b, c)
 
 #define mp_iszero(a)                 (mp_cmp_d(a, 0) == LTC_MP_EQ ? LTC_MP_YES : LTC_MP_NO)

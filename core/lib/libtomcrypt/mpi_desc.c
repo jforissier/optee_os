@@ -572,27 +572,46 @@ static void montgomery_deinit(void *a)
  * @b: exponent
  * @c: modulus
  * @d: destination
+ * @s: when true, the function uses a more secure but slower algorithm
  */
-static int exptmod(void *a, void *b, void *c, void *d)
+static int exptmod_optionally_safe(void *a, void *b, void *c, void *d, bool s)
 {
 	int res;
+	int E_public;
+
+	if (s)
+		E_public = MBEDTLS_MPI_IS_SECRET;
+	else
+		E_public = MBEDTLS_MPI_IS_PUBLIC;
 
 	if (d == a || d == b || d == c) {
 		mbedtls_mpi dest;
 
 		mbedtls_mpi_init_mempool(&dest);
-		res = mbedtls_mpi_exp_mod(&dest, a, b, c, NULL);
+		res = mbedtls_mpi_exp_mod_optionally_safe(&dest, a, b, c, NULL,
+							  E_public);
 		if (!res)
 			res = mbedtls_mpi_copy(d, &dest);
 		mbedtls_mpi_free(&dest);
 	} else {
-		res = mbedtls_mpi_exp_mod(d, a, b, c, NULL);
+		res = mbedtls_mpi_exp_mod_optionally_safe(d, a, b, c, NULL,
+							  E_public);
 	}
 
 	if (res)
 		return CRYPT_MEM;
 	else
 		return CRYPT_OK;
+}
+
+static int exptmod(void *a, void *b, void *c, void *d)
+{
+	return exptmod_optionally_safe(a, b, c, d, true);
+}
+
+static int exptmod_unsafe(void *a, void *b, void *c, void *d)
+{
+	return exptmod_optionally_safe(a, b, c, d, false);
 }
 
 static int rng_read(void *ignored __unused, unsigned char *buf, size_t blen)
@@ -676,6 +695,7 @@ ltc_math_descriptor ltc_mp = {
 	.montgomery_deinit = montgomery_deinit,
 
 	.exptmod = exptmod,
+	.exptmod_unsafe = exptmod_unsafe,
 	.isprime = isprime,
 
 #ifdef LTC_MECC
