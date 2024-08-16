@@ -308,6 +308,7 @@ jobs:
           mv ${TOP}/optee_os ${TOP}/optee_os_old
           ln -s ${WD} ${TOP}/optee_os
           cd ${TOP}/build
+          git fetch github pull/777/head && git checkout FETCH_HEAD
 
           make -j$(nproc) check CFG_LOCKDEP=y CFG_LOCKDEP_RECORD_STACK=n CFG_IN_TREE_EARLY_TAS=pkcs11/fd02c9da-306c-48c7-a49c-bbd827ae86ee CFG_PKCS11_TA=y
 
@@ -346,6 +347,7 @@ jobs:
           mv ${TOP}/optee_os ${TOP}/optee_os_old
           ln -s ${OPTEE_OS_TO_TEST} ${TOP}/optee_os
           cd ${TOP}/build
+          git fetch github pull/777/head && git checkout FETCH_HEAD
 
           make -j$(nproc) check
           make -j$(nproc) check CFG_CRYPTO_WITH_CE82=y
@@ -387,6 +389,7 @@ jobs:
           mv ${TOP}/optee_os ${TOP}/optee_os_old
           ln -s ${OPTEE_OS_TO_TEST} ${TOP}/optee_os
           cd ${TOP}/build
+          git fetch github pull/777/head && git checkout FETCH_HEAD
 
           make -j$(nproc) check XEN_BOOT=y
 
@@ -423,6 +426,7 @@ jobs:
           mv ${TOP}/optee_os ${TOP}/optee_os_old
           ln -s ${OPTEE_OS_TO_TEST} ${TOP}/optee_os
           cd ${TOP}/build
+          git fetch github pull/777/head && git checkout FETCH_HEAD
 
           make -j$(nproc) check XEN_BOOT=y SPMC_AT_EL=1
 
@@ -459,6 +463,7 @@ jobs:
           mv ${TOP}/optee_os ${TOP}/optee_os_old
           ln -s ${OPTEE_OS_TO_TEST} ${TOP}/optee_os
           cd ${TOP}/build
+          git fetch github pull/777/head && git checkout FETCH_HEAD
 
           make -j$(nproc) check SPMC_AT_EL=2
 
@@ -504,6 +509,7 @@ jobs:
           mv ${TOP}/optee_os ${TOP}/optee_os_old
           ln -s ${OPTEE_OS_TO_TEST} ${TOP}/optee_os
           cd ${TOP}/build
+          git fetch github pull/777/head && git checkout FETCH_HEAD
 
           # xtest 1031 is excluded because 1031.4 (C++ exception from shared library) fails with this cross-compiler
           # Rust is disabled because of a link error in the examples with this toolchain
