@@ -280,7 +280,7 @@ jobs:
   QEMUv7_check:
     name: make check (QEMUv7)
     runs-on: ubuntu-latest
-    container: jforissier/optee_os_ci:qemu_check
+    container: jforissier/optee_os_ci:qemu_check_test
     steps:
       - name: Remove /__t/*
         run: rm -rf /__t/*
@@ -316,7 +316,7 @@ jobs:
   QEMUv8_check:
     name: make check (QEMUv8)
     runs-on: ubuntu-latest
-    container: jforissier/optee_os_ci:qemu_check
+    container: jforissier/optee_os_ci:qemu_check_test
     steps:
       - name: Remove /__t/*
         run: rm -rf /__t/*
@@ -359,7 +359,7 @@ jobs:
   QEMUv8_Xen_check:
     name: make check (QEMUv8, Xen)
     runs-on: ubuntu-latest
-    container: jforissier/optee_os_ci:qemu_check
+    container: jforissier/optee_os_ci:qemu_check_test
     steps:
       - name: Remove /__t/*
         run: rm -rf /__t/*
@@ -395,7 +395,7 @@ jobs:
   QEMUv8_Xen_ffa_check:
     name: make check (QEMUv8, Xen FF-A)
     runs-on: ubuntu-latest
-    container: jforissier/optee_os_ci:qemu_check
+    container: jforissier/optee_os_ci:qemu_check_test
     steps:
       - name: Remove /__t/*
         run: rm -rf /__t/*
@@ -431,7 +431,7 @@ jobs:
   QEMUv8_Hafnium_check:
     name: make check (QEMUv8, Hafnium)
     runs-on: ubuntu-latest
-    container: jforissier/optee_os_ci:qemu_check
+    container: jforissier/optee_os_ci:qemu_check_test
     steps:
       - name: Remove /__t/*
         run: rm -rf /__t/*
@@ -467,7 +467,7 @@ jobs:
   QEMUv8_check_BTI_MTE_PAC:
     name: make check (QEMUv8, BTI+MTE+PAC)
     runs-on: ubuntu-latest
-    container: jforissier/optee_os_ci:qemu_check
+    container: jforissier/optee_os_ci:qemu_check_test
     steps:
       - name: Remove /__t/*
         run: rm -rf /__t/*
