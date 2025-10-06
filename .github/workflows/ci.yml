@@ -86,5 +86,7 @@ jobs:
           mv ${TOP}/optee_os ${TOP}/optee_os_old
           ln -s ${OPTEE_OS_TO_TEST} ${TOP}/optee_os
           cd ${TOP}/build
+          # Workaround "no space left on device": this saves 454M (Linux v6.16-rc7)
+          rm -rf ${TOP}/linux/drivers/gpu/drm/amd/include/asic_reg
 
           make -j$(nproc) check SPMC_AT_EL=2
