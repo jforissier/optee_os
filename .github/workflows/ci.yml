@@ -612,6 +612,7 @@ jobs:
         run: |
           cat > Dockerfile <<'EOF'
           FROM jforissier/optee_os_ci:qemu_check_arm64
+          RUN sed -i '13a\git remote add jf https://github.com/jforissier/optee_repo_build_files && git fetch jf && git checkout jf/upgrade-toolchain' /root/get_optee.sh
           RUN /root/get_optee.sh qemu_v8 /root/optee_repo_qemu_v8
           EOF
       - name: Build Docker image
