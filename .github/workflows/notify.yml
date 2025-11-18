@@ -47,6 +47,8 @@ jobs:
       - name: Show result
         run: |
           echo "Sensitive files changed: ${{ steps.files.outputs.any_changed }}"
+          echo "Current Run Attempt: ${{ github.run_attempt }}"
+          echo "Repository Check Status: ${{ github.repository == 'jforissier/optee_os' }}"
   # Runs conditionally, executes untrusted code
   notify_maintainers:
     name: Notify maintainers
