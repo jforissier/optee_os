@@ -13,15 +13,13 @@
 #      changed (Condition 2), enforcing a human security gate. In this case
 #      the job status is 'skipped' so the workflow overall status is 'success'
 #      and no error is shown. It is up to the project's admins to trigger a
-#      manual run or not.
+#      re-run or not.
 
 name: Maintainer notification
 on:
   # Run on pull requests with trusted code checked out from the target branch
   pull_request_target:
     types: [opened, synchronize]
-  # Allows a maintainer to manually trigger a re-run using the GitHub UI
-  workflow_dispatch:
 permissions:
   contents: read
 jobs:
@@ -61,9 +59,8 @@ jobs:
       issues: write
     if: |
       github.repository == 'jforissier/optee_os' &&
-      ((github.event_name == 'pull_request_target' &&
-         needs.check_sensitive_files.outputs.script_modified == 'false') ||
-       github.event_name == 'workflow_dispatch')
+      (needs.check_sensitive_files.outputs.script_modified == 'false' ||
+       github.run_attempt > 1)
     steps:
       # Checkout the untrusted code from the PR Branch
       - name: Checkout PR code
