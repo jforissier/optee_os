@@ -28,7 +28,7 @@ jobs:
   check_sensitive_files:
     name: Check sensitive files
     runs-on: ubuntu-latest
-    if: github.repository == 'OP-TEE/optee_os'
+    if: github.repository == 'jforissier/optee_os'
     outputs:
       script_modified: ${{ steps.files.outputs.any_changed }}
     steps:
@@ -63,7 +63,7 @@ jobs:
     permissions:
       issues: write
     if: |
-      github.repository == 'OP-TEE/optee_os' &&
+      github.repository == 'jforissier/optee_os' &&
       (needs.check_sensitive_files.outputs.script_modified == 'false' ||
        github.run_attempt > 1)
     steps:
