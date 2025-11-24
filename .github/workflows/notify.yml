@@ -28,7 +28,7 @@ jobs:
   check_sensitive_files:
     name: Check sensitive files
     runs-on: ubuntu-latest
-    if: github.repository == 'OP-TEE/optee_os'
+    if: github.repository == 'jforissier/optee_os'
     outputs:
       script_modified: ${{ steps.files.outputs.any_changed }}
     steps:
@@ -63,20 +63,30 @@ jobs:
     permissions:
       issues: write
     if: |
-      github.repository == 'OP-TEE/optee_os' &&
+      github.repository == 'jforissier/optee_os' &&
       (needs.check_sensitive_files.outputs.script_modified == 'false' ||
        github.run_attempt > 1)
     steps:
+      # Use a dedicated action to generate a short-lived token from a GitHub App
+      # with controlled permissions (issues: write)
+      # The app is created at the user or organization level. The secrets are
+      # 'repository secrets' created at the project level (optee_os).
+      - name: Generate short-lived GitHub App Token
+        id: generate-token
+        uses: actions/create-github-app-token@v1
+        with:
+          app-id: ${{ secrets.GH_NOTIFY_MAINT_TOKEN_APP_ID }}
+          private-key: ${{ secrets.GH_NOTIFY_MAINT_TOKEN_PRIVATE_KEY }}
+          permissions: '{"issues": "write"}'
       - name: Checkout PR code
         uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
       - name: Install python3-github
         run: |
           sudo apt-get update
           sudo apt-get install python3-github
       - name: Run scripts/notify_maintainers.py
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          # Checkout the untrusted code from the PR Branch
-          git fetch origin pull/${PR_NUMBER}/head && git checkout FETCH_HEAD
-          scripts/notify_maintainers.py
+          GITHUB_TOKEN: ${{ steps.generate-token.outputs.token }}
+        run: scripts/notify_maintainers.py
