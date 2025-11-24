@@ -3,6 +3,11 @@
 #
 # Copyright 2025, Linaro Ltd.
 #
+# Notify maintainers/reviewers for a PR using get_maintainer.py.
+# Posts a notification message to the PR with the GitHub handles of all
+# reviewers and maintainers responsible for the modified files. Handles
+# already mentioned in the PR are not repeated, nor are requested reviewers,
+# assignees and maintainers for 'THE REST'
 
 import os
 import subprocess
@@ -74,88 +79,62 @@ def get_handles_for_pr(pr_number: str):
 def main():
     parser = argparse.ArgumentParser(
         description=(
-            "Notify maintainers/reviewers for a PR using "
-            "get_maintainer.py.\n"
-            "If run in a GitHub environment (GITHUB_TOKEN and REPO set), "
-            "the notification message is posted directly to the PR. "
-            "Otherwise, the script outputs the message to the console.\n"
-            "The message lists the GitHub handles of all reviewers and "
-            "maintainers responsible for the modified files. Handles "
-            "already mentioned in the PR are not repeated, nor are "
-            "requested reviewers, assignees and maintainers for 'THE REST' "
         )
     )
-    parser.add_argument(
-        "--pr",
-        help="GitHub PR number (required outside GitHub environment)."
-    )
-    args = parser.parse_args()
 
-    github_env = all(os.getenv(var) for var in ("GITHUB_TOKEN", "REPO"))
+    github_env = all(os.getenv(var) for var in ("REPO", "PR_NUMBER",
+                                                "GITHUB_TOKEN"))
+    if not github_env:
+        print('This script must be run in GitHub Actions')
+        return
 
-    if github_env:
-        pr_number = args.pr or os.getenv("PR_NUMBER")
-        repo_name = os.getenv("REPO")
-        token = os.getenv("GITHUB_TOKEN")
-        if not pr_number:
-            print(
-                "Running in GitHub environment but no PR_NUMBER found. "
-                "Doing nothing."
-            )
-            return
-    else:
-        pr_number = args.pr
-        if not pr_number:
-            print("Error: --pr must be provided outside GitHub environment.")
-            return
-        repo_name = None
-        token = None
+    repo_name = os.getenv("REPO")
+    pr_number = os.getenv("PR_NUMBER")
+    token = os.getenv("GITHUB_TOKEN")
 
     handles_to_mention = get_handles_for_pr(pr_number)
     if not handles_to_mention:
         print("No maintainers or reviewers to mention.")
-        return
+        #return
     else:
         print("Final list of subsystem/platform maintainers/reviewers: " +
               " ".join(f"@{h}" for h in handles_to_mention))
 
-    if github_env:
-        auth = Auth.Token(token)
-        g = Github(auth=auth)
-        repo = g.get_repo(repo_name)
-        pr = repo.get_pull(int(pr_number))
+    auth = Auth.Token(token)
+    g = Github(auth=auth)
+    repo = g.get_repo(repo_name)
+    pr = repo.get_pull(int(pr_number))
+    pr.create_issue_comment('This is a test')
+    return
 
-        # Gather existing handles mentioned in previous comments
-        existing_handles = set()
-        for comment in pr.get_issue_comments():
-            existing_handles.update(re.findall(r"@([\w-]+)", comment.body))
-        if existing_handles:
-            print("Already mentioned: " +
-                  " ".join(f"@{h}" for h in existing_handles))
+    # Gather existing handles mentioned in previous comments
+    existing_handles = set()
+    for comment in pr.get_issue_comments():
+        existing_handles.update(re.findall(r"@([\w-]+)", comment.body))
+    if existing_handles:
+        print("Already mentioned: " +
+              " ".join(f"@{h}" for h in existing_handles))
 
-        # Skip PR author, assignees, and requested reviewers
-        skip_handles = {pr.user.login}
-        skip_handles.update(a.login for a in pr.assignees)
-        requested_reviewers, _ = pr.get_review_requests()
-        skip_handles.update(r.login for r in requested_reviewers)
-        if skip_handles:
-            print("Excluding author, assignees and requested reviewers: " +
-                  " ".join(f"@{h}" for h in skip_handles))
+    # Skip PR author, assignees, and requested reviewers
+    skip_handles = {pr.user.login}
+    skip_handles.update(a.login for a in pr.assignees)
+    requested_reviewers, _ = pr.get_review_requests()
+    skip_handles.update(r.login for r in requested_reviewers)
+    if skip_handles:
+        print("Excluding author, assignees and requested reviewers: " +
+              " ".join(f"@{h}" for h in skip_handles))
 
-        # Exclude all these from new notifications
-        new_handles = handles_to_mention - existing_handles - skip_handles
-        if not new_handles:
-            print("All relevant handles have already been mentioned "
-                  "or are already notified by GitHub.")
-            return
+    # Exclude all these from new notifications
+    new_handles = handles_to_mention - existing_handles - skip_handles
+    if not new_handles:
+        print("All relevant handles have already been mentioned "
+              "or are already notified by GitHub.")
+        return
 
-        message = ("FYI " + " ".join(f"@{h}" for h in new_handles))
-        print(f"Comment to add to PR: '{message}'")
-        pr.create_issue_comment(message)
-        print(f"Comment added")
-    else:
-        message = ("FYI " + " ".join(f"@{h}" for h in handles_to_mention))
-        print(f"Comment added to PR would be: '{message}'")
+    message = ("FYI " + " ".join(f"@{h}" for h in new_handles))
+    print(f"Comment to add to PR: '{message}'")
+    pr.create_issue_comment(message)
+    print(f"Comment added")
 
 
 if __name__ == "__main__":
