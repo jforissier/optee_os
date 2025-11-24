@@ -78,5 +78,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           # Checkout the untrusted code from the PR Branch
-          git fetch origin pull/${PR_NUMBER}/head && git checkout FETCH_HEAD
+          cd /tmp
+          git clone --depth=1 ${REPO} && git fetch origin pull/${PR_NUMBER}/head && git checkout FETCH_HEAD
           scripts/notify_maintainers.py
