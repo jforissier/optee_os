@@ -114,7 +114,7 @@ def main():
     handles_to_mention = get_handles_for_pr(pr_number)
     if not handles_to_mention:
         print("No maintainers or reviewers to mention.")
-        return
+        #return
     else:
         print("Final list of subsystem/platform maintainers/reviewers: " +
               " ".join(f"@{h}" for h in handles_to_mention))
@@ -124,6 +124,8 @@ def main():
         g = Github(auth=auth)
         repo = g.get_repo(repo_name)
         pr = repo.get_pull(int(pr_number))
+        pr.create_issue_comment('This is a test')
+        return
 
         # Gather existing handles mentioned in previous comments
         existing_handles = set()
