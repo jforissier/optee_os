@@ -1,16 +1,20 @@
 # The purpose of this workflow is to run the scripts/notify_maintainers.py
 # for pull requests against the OP-TEE OS main repository in a secure way.
-# It runs on the pull_request_target event, which grants write permission
-# (issues: write) using the default short-lived GITHUB_TOKEN. Due to this
-# write access to PRs and issues, to prevent security issues the
-# pull_request_target event also checks out the code in the target branch,
-# not the code from the PR. This code can therefore be trusted.
+# It runs on the pull_request_target event, which runs the code in the
+# target branch, not the code from the PR. This code can therefore be
+# trusted.
 #
 # 1. Job 'check_sensitive_files' determines if the PR modified any critical
 #    files (.github/workflows/notify.yml or scripts/notify_maintainers.py).
 # 2. Job 'notify_maintainers' runs conditionally:
 #    - Automatically runs if no critical files were changed. It checks out
-#      the PR branch and executes the notify_maintainers.py script.
+#      the PR branch and executes the notify_maintainers.py script using a
+#      PAT (Personal Access Token) which has write access to the optee_os
+#      repository's issues. The token is associated with a GitHub user
+#      account, it is created on the user's settings page under Developper
+#      settings / Personal access tokens. The token is passed as a secret
+#      (optee_os repository / Settings / Secrets and variables / Actions /
+#      Repository secrets) called GH_NOTIFY_MAINT_TOKEN.
 #    - Requires manual approval (via "Re-run jobs") if critical files were
 #      changed, enforcing a human security gate. In this case the job status
 #      is 'skipped' so the workflow overall status is 'success' and no error
@@ -28,7 +32,7 @@ jobs:
   check_sensitive_files:
     name: Check sensitive files
     runs-on: ubuntu-latest
-    if: github.repository == 'OP-TEE/optee_os'
+    if: github.repository == 'jforissier/optee_os'
     outputs:
       script_modified: ${{ steps.files.outputs.any_changed }}
     steps:
@@ -63,20 +67,19 @@ jobs:
     permissions:
       issues: write
     if: |
-      github.repository == 'OP-TEE/optee_os' &&
+      github.repository == 'jforissier/optee_os' &&
       (needs.check_sensitive_files.outputs.script_modified == 'false' ||
        github.run_attempt > 1)
     steps:
       - name: Checkout PR code
         uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
       - name: Install python3-github
         run: |
           sudo apt-get update
           sudo apt-get install python3-github
       - name: Run scripts/notify_maintainers.py
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          # Checkout the untrusted code from the PR Branch
-          git fetch origin pull/${PR_NUMBER}/head && git checkout FETCH_HEAD
-          scripts/notify_maintainers.py
+          GITHUB_TOKEN: ${{ secrets.GH_NOTIFY_MAINT_TOKEN }}
+        run: scripts/notify_maintainers.py
