@@ -109,6 +109,8 @@ def main():
     print(f"PS user is {pr.user.login}")
     user = g.get_user()
     print(f"Authenticated as: {user.login}")
+    collab = repo.get_collaborator_permission(user.login)
+    print(f"Permissions: {collab}")
     pr.create_issue_comment('This is a test')
     return
 
