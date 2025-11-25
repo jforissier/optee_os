@@ -115,7 +115,7 @@ def main():
     for comment in pr.get_issue_comments():
         print(comment.user.login, comment.body)
     print("== End PR comments before")
-    pr.create_issue_comment('This is a test')
+    pr.create_issue_comment('This is a test @jforissier')
     print("== PR comments after")
     for comment in pr.get_issue_comments():
         print(comment.user.login, comment.body)
