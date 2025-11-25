@@ -106,12 +106,20 @@ def main():
     print(f"repo_name={repo_name} pr_number={pr_number}")
     print(f"PR title is '{pr.title}'")
     print(f"PR state is {pr.state}")
-    print(f"PS user is {pr.user.login}")
+    print(f"PR user is {pr.user.login}")
     user = g.get_user()
     print(f"Authenticated as: {user.login}")
     collab = repo.get_collaborator_permission(user.login)
     print(f"Permissions: {collab}")
+    print("== PR comments before")
+    for comment in pr.get_issue_comments():
+        print(comment.user.login, comment.body)
+    print("== End PR comments before")
     pr.create_issue_comment('This is a test')
+    print("== PR comments after")
+    for comment in pr.get_issue_comments():
+        print(comment.user.login, comment.body)
+    print("== End PR comments after")
     return
 
     # Gather existing handles mentioned in previous comments
