@@ -3,21 +3,21 @@
 #
 # Copyright 2025, Linaro Ltd.
 #
-# Build a message to notify maintainers/reviewers for a PR.
+# Build a message to notify maintainers/reviewers for a PR. Invoked by the
+# notify.yml workflow which posts the content of the message variable output by
+# this script as a PR comment.
 #
 # Creates and prints a notification message with the GitHub handles of all
-# reviewers and maintainers responsible for the modified files. Handles
-# already mentioned in the PR are not repeated, nor are requested reviewers,
-# assignees and maintainers for 'THE REST'. The get_maintainer.py is used to
-# obtain the GitHub handles.
-#
-# The message is meant to be posted to the PR by a bot in a subsequent step.
+# reviewers and maintainers responsible for the modified files. The
+# get_maintainer.py script is used to obtain the handles. Handles already
+# mentioned in the PR are not repeated, nor are requested reviewers, assignees
+# and maintainers for 'THE REST'.
 #
 # The output of this script is as follows:
 #
 # # Some information
 # # Some other information
-# message=FYI @handle1 @handle2... 
+# message=FYI @handle1 @handle2...
 
 import os
 import subprocess
@@ -105,7 +105,7 @@ def main():
     handles_to_mention = get_handles_for_pr(pr_number)
     if not handles_to_mention:
         print("# No maintainers or reviewers to mention.")
-        #return
+        # return
     else:
         print("# Final list of subsystem/platform maintainers/reviewers: " +
               " ".join(f"@{h}" for h in handles_to_mention))
@@ -113,7 +113,7 @@ def main():
     g = Github(token)
     repo = g.get_repo(repo_name)
     pr = repo.get_pull(int(pr_number))
-    print("message=FYI @jforissier")
+    print("message=FYI @jforissier @jforissier")
     return
 
     # Gather existing handles mentioned in previous comments
