@@ -105,7 +105,7 @@ def main():
     handles_to_mention = get_handles_for_pr(pr_number)
     if not handles_to_mention:
         print("# No maintainers or reviewers to mention.")
-        return
+        # return
     else:
         print("# Final list of subsystem/platform maintainers/reviewers: " +
               " ".join(f"@{h}" for h in handles_to_mention))
@@ -138,7 +138,8 @@ def main():
               "or are already notified by GitHub.")
         return
 
-    print("message=FYI " + " ".join(f"@{h}" for h in new_handles))
+    #print("message=FYI " + " ".join(f"@{h}" for h in new_handles))
+    print("message=FYI @jforissier")
 
 
 if __name__ == "__main__":
