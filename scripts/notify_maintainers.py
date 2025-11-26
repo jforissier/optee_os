@@ -105,40 +105,40 @@ def main():
     handles_to_mention = get_handles_for_pr(pr_number)
     if not handles_to_mention:
         print("# No maintainers or reviewers to mention.")
-        # return
+        message=""
     else:
         print("# Final list of subsystem/platform maintainers/reviewers: " +
               " ".join(f"@{h}" for h in handles_to_mention))
 
-    g = Github(token)
-    repo = g.get_repo(repo_name)
-    pr = repo.get_pull(int(pr_number))
+        g = Github(token)
+        repo = g.get_repo(repo_name)
+        pr = repo.get_pull(int(pr_number))
 
-    # Gather existing handles mentioned in previous comments
-    existing_handles = set()
-    for comment in pr.get_issue_comments():
-        existing_handles.update(re.findall(r"@([\w-]+)", comment.body))
-    if existing_handles:
-        print("# Already mentioned: " +
-              " ".join(f"@{h}" for h in existing_handles))
+        # Gather existing handles mentioned in previous comments
+        existing_handles = set()
+        for comment in pr.get_issue_comments():
+            existing_handles.update(re.findall(r"@([\w-]+)", comment.body))
+        if existing_handles:
+            print("# Already mentioned: " +
+                  " ".join(f"@{h}" for h in existing_handles))
 
-    # Skip PR author, assignees, and requested reviewers
-    skip_handles = {pr.user.login}
-    skip_handles.update(a.login for a in pr.assignees)
-    requested_reviewers, _ = pr.get_review_requests()
-    skip_handles.update(r.login for r in requested_reviewers)
-    if skip_handles:
-        print("# Excluding author, assignees and requested reviewers: " +
-              " ".join(f"@{h}" for h in skip_handles))
+        # Skip PR author, assignees, and requested reviewers
+        skip_handles = {pr.user.login}
+        skip_handles.update(a.login for a in pr.assignees)
+        requested_reviewers, _ = pr.get_review_requests()
+        skip_handles.update(r.login for r in requested_reviewers)
+        if skip_handles:
+            print("# Excluding author, assignees and requested reviewers: " +
+                  " ".join(f"@{h}" for h in skip_handles))
 
-    # Exclude all these from new notifications
-    new_handles = handles_to_mention - existing_handles - skip_handles
-    if not new_handles:
-        print("# All relevant handles have already been mentioned "
-              "or are already notified by GitHub.")
-        return
+        # Exclude all these from new notifications
+        new_handles = handles_to_mention - existing_handles - skip_handles
+        if not new_handles:
+            print("# All relevant handles have already been mentioned "
+                  "or are already notified by GitHub.")
 
-    # message="FYI " + " ".join(f"@{h}" for h in new_handles))
+        message="FYI " + " ".join(f"@{h}" for h in new_handles))
+
     print(f"message={message}")
 
 
