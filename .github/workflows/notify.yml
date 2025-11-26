@@ -22,7 +22,8 @@ jobs:
           PR_NUMBER: ${{ github.event.pull_request.number }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          python3 scripts/notify_maintainers.py >> $GITHUB_OUTPUT
+          python3 scripts/notify_maintainers.py | tee output.txt
+          grep message= output.txt >> $GITHUB_OUTPUT
       - name: Comment on PR
         if: steps.compute.outputs.message != ''
         uses: actions/github-script@v7
