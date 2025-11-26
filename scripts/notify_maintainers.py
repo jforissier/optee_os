@@ -137,7 +137,7 @@ def main():
             print("# All relevant handles have already been mentioned "
                   "or are already notified by GitHub.")
 
-        message="FYI " + " ".join(f"@{h}" for h in new_handles))
+        message="FYI " + " ".join(f"@{h}" for h in new_handles)
 
     print(f"message={message}")
 
