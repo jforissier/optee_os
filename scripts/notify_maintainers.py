@@ -113,8 +113,6 @@ def main():
     g = Github(token)
     repo = g.get_repo(repo_name)
     pr = repo.get_pull(int(pr_number))
-    print("message=FYI @jforissier @jforissier")
-    return
 
     # Gather existing handles mentioned in previous comments
     existing_handles = set()
@@ -140,7 +138,8 @@ def main():
               "or are already notified by GitHub.")
         return
 
-    print("message=FYI " + " ".join(f"@{h}" for h in new_handles))
+    #print("message=FYI " + " ".join(f"@{h}" for h in new_handles))
+    print("message=FYI @jforissier")
 
 
 if __name__ == "__main__":
