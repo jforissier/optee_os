@@ -138,8 +138,8 @@ def main():
               "or are already notified by GitHub.")
         return
 
-    #print("message=FYI " + " ".join(f"@{h}" for h in new_handles))
-    print("message=FYI @jforissier")
+    # message="FYI " + " ".join(f"@{h}" for h in new_handles))
+    print(f"message={message}")
 
 
 if __name__ == "__main__":
