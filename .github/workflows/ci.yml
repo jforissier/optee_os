@@ -531,7 +531,7 @@ jobs:
               make -j$(nproc) check CFG_FTRACE_SUPPORT=y CFG_SYSCALL_FTRACE=y XTEST_ARGS=regression_1001 RUST_ENABLE=n MEASURED_BOOT_FTPM=n
           - name: FW handoff
             make_commands: |
-              make -j$(nproc) check ARM_FIRMWARE_HANDOFF=y
+              cd ../trusted-firmware-a && git submodule update --init && cd ../build && make -j$(nproc) check ARM_FIRMWARE_HANDOFF=y
           - name: KASAN
             make_commands: |
               make -j$(nproc) check CFG_CORE_SANITIZE_KADDRESS=y CFG_CORE_ASLR=n CFG_ATTESTATION_PTA=n RUST_ENABLE=n MEASURED_BOOT_FTPM=n XTEST_ARGS="n_1001 n_1003 n_1004"
@@ -546,7 +546,7 @@ jobs:
               make -j$(nproc) check SPMC_AT_EL=1 CFG_SECURE_PARTITION=y CFG_SPMC_TESTS=y
           - name: SPMC_AT_EL=2
             make_commands: |
-              make -j$(nproc) check SPMC_AT_EL=2
+              cd ../trusted-firmware-a && git submodule update --init && cd ../build && make -j$(nproc) check SPMC_AT_EL=2
           - name: SPMC_AT_EL=3
             make_commands: |
               make -j$(nproc) check SPMC_AT_EL=3
