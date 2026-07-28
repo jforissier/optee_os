@@ -15,6 +15,7 @@
 #include <mm/vm.h>
 
 #define BOUNCE_BUFFER_SIZE	4096
+#define USER_TA_FLAGS_MASK	(TA_FLAGS_MASK & ~TA_FLAG_CONCURRENT)
 
 extern uint8_t ldelf_data[];
 extern const unsigned int ldelf_code_size;
@@ -160,9 +161,10 @@ TEE_Result ldelf_init_with_ldelf(struct ts_session *sess,
 	if (is_user_ta_ctx(uctx->ts_ctx)) {
 		/*
 		 * This is already checked by the elf loader, but since it runs
-		 * in user mode we're not trusting it entirely.
+		 * in user mode we're not trusting it entirely. Note that
+		 * TA_FLAG_CONCURRENT is only allowed for pseudo TAs.
 		 */
-		if (arg_bbuf->flags & ~TA_FLAGS_MASK)
+		if (arg_bbuf->flags & ~USER_TA_FLAGS_MASK)
 			return TEE_ERROR_BAD_FORMAT;
 
 		to_user_ta_ctx(uctx->ts_ctx)->ta_ctx.flags = arg_bbuf->flags;
