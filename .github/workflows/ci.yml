@@ -492,6 +492,11 @@ jobs:
           cat > Dockerfile <<'EOF'
           FROM jforissier/optee_os_ci:qemu_check
           RUN /root/get_optee.sh qemu_v8 /root/optee_repo_qemu_v8
+          RUN git -C /root/optee_repo_qemu_v8/build fetch \
+              https://github.com/jforissier/optee_repo_build_files.git \
+              hafnium-checkout-fix && \
+              git -C /root/optee_repo_qemu_v8/build checkout -B \
+              hafnium-checkout-fix FETCH_HEAD
           EOF
       - name: Build Docker image
         run: |
@@ -638,6 +643,11 @@ jobs:
           cat > Dockerfile <<'EOF'
           FROM jforissier/optee_os_ci:qemu_check_arm64
           RUN /root/get_optee.sh qemu_v8 /root/optee_repo_qemu_v8
+          RUN git -C /root/optee_repo_qemu_v8/build fetch \
+              https://github.com/jforissier/optee_repo_build_files.git \
+              hafnium-checkout-fix && \
+              git -C /root/optee_repo_qemu_v8/build checkout -B \
+              hafnium-checkout-fix FETCH_HEAD
           EOF
       - name: Build Docker image
         run: |
